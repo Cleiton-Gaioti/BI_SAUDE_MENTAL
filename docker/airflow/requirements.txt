@@ -1,0 +1,10 @@
+cffi==1.15.1
+Jinja2==3.1.2
+MarkupSafe==2.1.2
+packaging==23.0
+pycparser==2.21
+pytz==2022.7.1
+pytz-deprecation-shim==0.1.0.post0
+rpy2==3.5.7
+tzdata==2022.7
+tzlocal==4.2
