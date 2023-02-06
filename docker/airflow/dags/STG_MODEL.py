@@ -9,11 +9,10 @@ class Stg_Model(metaclass=ABCMeta):
             options(repos=c(CRAN="https://cloud.r-project.org/bin/windows/contrib/4.2/remotes_2.4.2.zip"))
         
             install.packages('remotes')
+            remotes::install_github('rfsaldanha/microdatasus')
         
             library(DBI)
             library(microdatasus)
-            
-            remotes::install_github('rfsaldanha/microdatasus')
         
             dados <- fetch_datasus(
                 year_start={year_start}, 

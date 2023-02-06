@@ -1,6 +1,6 @@
 import pandas as pd
 from datetime import datetime as dt
-from pysus.online_data.SIM import download
+from pysus.online_data.SIM import download, get_municipios
 
 
 def extract_sim(start_year,end_year,state):
@@ -9,6 +9,8 @@ def extract_sim(start_year,end_year,state):
     return df
 
 def treat_sim(df: pd.DataFrame):
+    df_municipios = get_municipios()
+
     columns = [col_name.lower() for col_name in df.columns]
 
     if 'numerodo' in columns:
@@ -47,9 +49,17 @@ def treat_sim(df: pd.DataFrame):
 
     if 'natural' in columns:
         df['natural'] = df['natural'].astype(str)
-    'codmunnatu'
-    'dtnasc'
-    'idade'
+
+    if 'codmunnatu' in columns:
+        df['codmunnatu'] = df['codmunnatu'].astype(str)
+    
+    if 'dtnasc' in columns:
+        df['dtnasc'] = df['dtnasc'].astype(str).apply(lambda x:dt.strptime(x, '%d%m%Y').strftime('%d/%m/%Y'))
+    
+    if 'idade' in columns:
+        df['idade'] = df['idade'].astype(str)
+
+        
     'minutos'
     'horas'
     'dias'

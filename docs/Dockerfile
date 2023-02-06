@@ -1,6 +1,33 @@
 FROM apache/airflow:2.5.1
-COPY requirements.txt .
-RUN apt-get update && apt-get install -y r-base r-base-core && \
-    rm -r /var/lib/apt/lists/*
-# RUN python3 -m pip install rpy2
-RUN pip install -r requirements.txt
+
+ENV AIRFLOW_HOME=/opt/airflow
+
+USER root
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+         vim \
+  && apt-get autoremove -yqq --purge \
+  && apt-get clean \
+  && apt-get remove -y python \
+  && apt-get install -y python3 r-base \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN echo -e "AIRFLOW_UID=$(id -u)" > .env
+
+RUN sudo usermod -a -G staff root
+RUN R -e "install.packages(c('devtools', 'RPostgres', 'remotes', 'RCurl', 'swirl'), dependencies=TRUE)"
+RUN R -e "remotes::install_github('rfsaldanha/microdatasus')"
+
+USER airflow
+
+RUN python -m pip install --upgrade pip
+
+COPY requirements.txt $AIRFLOW_HOME
+
+RUN pip install -r $AIRFLOW_HOME/requirements.txt
+
+WORKDIR ${AIRFLOW_HOME}
+
+# run "docker build . --tag airflow:2.5.1" to construct the image
+# "docker-compose up -d" to run containers
