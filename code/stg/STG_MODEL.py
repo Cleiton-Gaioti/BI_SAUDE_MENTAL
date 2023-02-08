@@ -19,6 +19,8 @@ class Stg_Model(metaclass=ABCMeta):
                 year_end={year_end}, 
                 uf='{uf}', 
                 information_system='{info_sys}')
+
+            dados <- process_sim(data)
         """)
 
     @abstractmethod

@@ -1,17 +1,13 @@
 options(repos=c(CRAN='http://cran.rstudio.com'))
 
-#install.packages(c('devtools', 'RPostgres', 'remotes'), dependencies=TRUE)
-#remotes::install_github('rfsaldanha/microdatasus')
+install.packages(c('devtools', 'RPostgres', 'remotes'), dependencies=TRUE)
+remotes::install_github('rfsaldanha/microdatasus')
 
 library(DBI)
 library(microdatasus)
 
-dados <- fetch_datasus(
-  year_start=2010, 
-  year_end=2020, 
-  uf='ES', 
-  information_system='SIM-DO'
-)
+dados <- fetch_datasus(year_start = 2010, year_end = 2020, uf = "ES", information_system = "SIM-DO")
+dados <- process_sim(dados)
 
 tryCatch({{
   print('Connecting to Database…')

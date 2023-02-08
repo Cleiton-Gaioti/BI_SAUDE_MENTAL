@@ -1,6 +1,6 @@
 import pandas as pd
 from datetime import datetime as dt
-from pysus.online_data.SIM import download, get_municipios
+from pysus.online_data.SIM import download, get_municipios, get_ocupations
 
 
 def extract_sim(start_year, end_year, state):
@@ -11,7 +11,7 @@ def extract_sim(start_year, end_year, state):
 
 def treat_sim(df: pd.DataFrame):
     df = df.astype(str)
-    df_municipios = get_municipios()
+    df_municipios = get_municipios().astype(str).rename({'MUNCOD': 'CODMUNRES'})
 
     columns = [col_name.lower() for col_name in df.columns]
 
@@ -28,6 +28,9 @@ def treat_sim(df: pd.DataFrame):
     if 'dtobito' in columns:
         df['dtobito'] = df['dtobito'].apply(lambda x: dt.strptime(x, '%d%m%Y').strftime('%d/%m/%Y'))
         df['dtobito'] = df['dtobito'].astype('datetime64[ns]')
+
+    if 'natural' in columns:
+        pass # TODO: estudar tratamentos a serem feitos
 
     if 'dtnasc' in columns:
         df['dtnasc'] = df['dtnasc'].apply(lambda x: dt.strptime(x, '%d%m%Y').strftime('%d/%m/%Y'))
@@ -81,10 +84,15 @@ def treat_sim(df: pd.DataFrame):
             '9 a 11 anos' if y == '8' else
             None))
 
-    'esc2010'
-    'seriescfal'
-    'ocup'
-    'codmunres'
+    if 'ocup' in columns:
+        if not 'dtobito' in columns:
+            raise ValueError('The variable DTOBITO is needed to preprocess the variable OCUP.')
+
+        pass # TODO: estudar tratamentos a serem feitos
+
+    if 'codmunres' in columns:
+        df_mun = df_municipios.copy()
+        
     'lococor'
     'codestab'
     'estabdescr'
