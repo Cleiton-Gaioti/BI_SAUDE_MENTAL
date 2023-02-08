@@ -91,7 +91,8 @@ def treat_sim(df: pd.DataFrame):
         pass # TODO: estudar tratamentos a serem feitos
 
     if 'codmunres' in columns:
-        df_mun = df_municipios.copy()
+        df_mun = df_municipios['MUNCOD', 'MUNNOME', 'UFCOD']
+        df_mun = df_mun.rename(columns={'MUNCOD': 'codmunres', 'MUNNOME': 'nomemunres', 'UFCOD': 'codufres'})
         
     'lococor'
     'codestab'
