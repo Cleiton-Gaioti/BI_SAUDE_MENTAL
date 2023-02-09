@@ -130,3 +130,4 @@ dmypy.json
 
 /datasources
 /.idea
+/docker/airflow/logs/

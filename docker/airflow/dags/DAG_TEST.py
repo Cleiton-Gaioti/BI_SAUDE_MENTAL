@@ -14,6 +14,6 @@ with DAG(
     sim = BashOperator(
         task_id='SIM',
         # bash_command=f'{cwd}run_r.sh {cwd}sim.R ',
-        bash_command=f'Rscript {cwd}sim.R ',
+        bash_command=f'Rscript {cwd}sim.R',
         dag=dag,
     )

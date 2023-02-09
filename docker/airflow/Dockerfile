@@ -12,12 +12,14 @@ RUN apt-get update \
   && apt-get remove -y python \
   && apt-get install -y python3 r-base \
   && apt-get install -y openssl libssl-dev \
+  && apt -y install libcurl4-openssl-dev \
   && rm -rf /var/lib/apt/lists/*
 
 RUN echo -e "AIRFLOW_UID=$(id -u)" > .env
 
 RUN sudo usermod -a -G staff root
-RUN R -e "install.packages(c('devtools', 'RPostgres', 'remotes'), dependencies=TRUE)"
+RUN sudo chmod 777 -R /usr/local/lib/R/site-library
+RUN R -e "install.packages(c('devtools', 'RPostgres', 'remotes', 'RCurl'), dependencies=TRUE)"
 RUN R -e "remotes::install_github('rfsaldanha/microdatasus')"
 
 USER airflow
