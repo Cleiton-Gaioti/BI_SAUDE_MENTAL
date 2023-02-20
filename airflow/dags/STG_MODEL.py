@@ -27,7 +27,7 @@ class Stg_Model(metaclass=ABCMeta):
         df.to_sql(con=con, schema=schema, name=tb_name, if_exists='replace', index=False)
 
     @classmethod
-    def run(cls, con, year_start, year_end, uf, info_sys, schema, tb_name):
+    def run(cls, uf, year_start, year_end, info_sys, con, schema, tb_name):
         cls.extract(year_start, year_end, uf, info_sys)
 
         cls.treat().pipe(cls.load, con, schema, tb_name)

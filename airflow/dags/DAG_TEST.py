@@ -1,10 +1,10 @@
 from airflow import DAG
-from main import run_sim
-from STG_SIM import Stg_SIM
+""" from main import run_sim
+from airflow.operators.python import PythonOperator
+from STG_SIM import Stg_SIM """
 from datetime import datetime
 from CONNECTION import create_connection
 from airflow.operators.bash import BashOperator
-from airflow.operators.python import PythonOperator
 
 
 cwd = '/opt/airflow/dags/scripts/'
@@ -22,14 +22,14 @@ with DAG(
         password='postgres', 
         port=5432)
 
-    """sim = BashOperator(
+    sim = BashOperator(
         task_id='SIM',
         # bash_command=f'{cwd}run_r.sh {cwd}sim.R ',
         bash_command=f'Rscript {cwd}sim.R',
         dag=dag,
-    )"""
+    )
     
-    sim = PythonOperator(
+    """sim = PythonOperator(
         task_id='sim',
         python_callable=run_sim(
             uf='ES',
@@ -39,4 +39,4 @@ with DAG(
             schema='stg',
             tb_name='sim_2010_2020'
         )
-    )
+    )"""
