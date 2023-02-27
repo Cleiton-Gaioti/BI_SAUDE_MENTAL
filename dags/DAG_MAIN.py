@@ -1,11 +1,15 @@
 from airflow import DAG
-from stg.STG_SIM import run_sim
 from datetime import datetime
-from DW_TOOLS import create_connection
+from airflow.utils.task_group import TaskGroup
 from airflow.operators.python import PythonOperator
 
+from DW_TOOLS import create_connection
+from stg.STG_SIM import run_sim
+from stg.STG_CBO import run_stg_cbo
+from stg.STG_OCUPACAO import run_stg_ocupacao
+from stg.STG_MUNICIPIOS import run_stg_municipios
+from stg.STG_NATURALIDADE import run_stg_naturalidade
 
-cwd = '/opt/airflow/dags/scripts/'
 
 with DAG(
     'DAG_MAIN',
@@ -20,15 +24,55 @@ with DAG(
         password='postgres', 
         port=5432)
     
-    sim = PythonOperator(
-        task_id='sim',
-        python_callable=run_sim,
-        op_kwargs={
-            'uf': 'ES',
-            'start_year': 2010,
-            'end_year': 2020,
-            'con': con,
-            'schema': 'stg',
-            'tb_name': 'sim_2010_2020'},
-        dag=dag
-    )
+    with TaskGroup(group_id='stages') as stages:
+        stg_sim = PythonOperator(
+            task_id='stg_sim',
+            python_callable=run_sim,
+            op_kwargs={
+                'uf': 'ES',
+                'start_year': 2010,
+                'end_year': 2020,
+                'con': con,
+                'schema': 'stg',
+                'tb_name': 'stg_sim_2010_2020'},
+            dag=dag)
+        
+        stg_municipios = PythonOperator(
+            task_id='stg_municipios',
+            python_callable=run_stg_municipios,
+            op_kwargs={
+                'file_path': "dags/arquivos/tabMunicipios.csv",
+                'con': con,
+                'schema': 'stg',
+                'tb_name': 'stg_municipios'},
+            dag=dag)
+        
+        stg_naturalidade = PythonOperator(
+            task_id='stg_naturalidade',
+            python_callable=run_stg_naturalidade,
+            op_kwargs={
+                'file_path': "dags/arquivos/tabNaturalidade.csv",
+                'con': con,
+                'schema': 'stg',
+                'tb_name': 'stg_naturalidade'},
+            dag=dag)
+        
+        stg_ocupacao = PythonOperator(
+            task_id='stg_ocupacao',
+            python_callable=run_stg_ocupacao,
+            op_kwargs={
+                'file_path': "dags/arquivos/tabOcupacao.csv",
+                'con': con,
+                'schema': 'stg',
+                'tb_name': 'stg_ocupacao'},
+            dag=dag)
+        
+        stg_cbo = PythonOperator(
+            task_id='stg_cbo',
+            python_callable=run_stg_cbo,
+            op_kwargs={
+                'file_path': "dags/arquivos/tabCBO.csv",
+                'con': con,
+                'schema': 'stg',
+                'tb_name': 'stg_cbo'},
+            dag=dag)    
