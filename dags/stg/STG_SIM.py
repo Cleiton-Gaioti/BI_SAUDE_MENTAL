@@ -1,43 +1,37 @@
+import numpy as np
 import pandas as pd
-from CONNECTION import create_connection
+from DW_TOOLS import create_connection, cronometrar
 from pysus.online_data.SIM import download, get_municipios
 
 
+@cronometrar
 def extract_sim(uf, start_year, end_year):
     df = pd.concat([download(uf, year) for year in range(start_year, end_year + 1)])
 
     return df
 
 
+@cronometrar
 def treat_sim(df):
-    df = df.astype('string')
+    df = df.astype(str).replace({'': None, '<NA>': None, np.nan: None})
 
-    df_municipios = get_municipios().astype(str).rename({'MUNCOD': 'CODMUNRES'})
+    df_municipios = get_municipios().replace({'': None, '<NA>': None, np.nan: None})
 
-    df_naturalidade = pd.read_csv("dags/arquivos/tabNaturalidade.csv", sep=";", dtype=str)
+    df_naturalidade = pd.read_csv("dags/arquivos/tabNaturalidade.csv", sep=";", dtype=str).replace({'': None, '<NA>': None, np.nan: None})
 
-    df_ocupacao = pd.read_csv("dags/arquivos/tabOcupacao.csv", sep=";", dtype=str, names=['cod', 'nm_ocup'])
+    df_ocupacao = pd.read_csv("dags/arquivos/tabOcupacao.csv", sep=";", dtype=str, names=['cod', 'nm_ocup']).replace({'': None, '<NA>': None, np.nan: None})
 
-    df_cbo = pd.read_csv("dags/arquivos/tabCBO.csv", sep=";", dtype=str, names=['cod', 'nm_cbo'])
+    df_cbo = pd.read_csv("dags/arquivos/tabCBO.csv", sep=";", dtype=str, names=['cod', 'nm_cbo']).replace({'': None, '<NA>': None, np.nan: None})
 
     df.columns = [col_name.lower() for col_name in df.columns]
-
-    #if 'numerodo' in df.columns:
-    #    df['numerodo'] = df['numerodo'].apply(lambda x: None if x.strip() == '' else x.strip())
 
     if 'codinst' in df.columns:
         df['codinst'] = df['codinst'].apply(
             lambda x:
-            'Estadual'  if x == 'E' else 
-            'Regional'  if x == 'R' else 
-            'Municipal' if x == 'M' else 
+            'Estadual'  if x == 'E' else
+            'Regional'  if x == 'R' else
+            'Municipal' if x == 'M' else
             None)
-        
-    #if 'numerodv' in df.columns:
-    #    df['numerodv'] = df['numerodv'].apply(lambda x: None if x.strip() == '' else x.strip())
-        
-    #if 'origem' in df.columns:
-    #    df['origem'] = df['origem'].apply(lambda x: None if x.strip() == '' else x.strip())
 
     if 'tipobito' in df.columns:
         df['tipobito'] = df['tipobito'].apply(
@@ -52,39 +46,24 @@ def treat_sim(df):
 
         df['ano_morte'] = df['dtobito'].apply(lambda x: x.year)
 
-    #if 'horaobito' in df.columns:
-    #    df['horaobito'] = df['horaobito'].apply(lambda x: None if x.strip() == '' else x.strip())
-
-    #if 'numsus' in df.columns:
-    #    df['numsus'] = df['numsus'].apply(lambda x: None if x.strip() == '' else x.strip())
-
     if 'natural' in df.columns:
         df['natural'] = df.merge(right=df_naturalidade, how='left', left_on='natural', right_on='cod')['nome']
-
-    #if 'codmunnatu' in df.columns:
-    #    df['codmunnatu'] = df['codmunnatu'].apply(lambda x: None if x.strip() == '' else x.strip())
     
     if 'dtnasc' in df.columns:
         df.loc[df['dtnasc'] == '', 'dtnasc'] = None
         df['dtnasc'] = pd.to_datetime(df['dtnasc'], format='%d%m%Y')
 
     if 'idade' in df.columns:
-
         df.loc[(df['idade'] == '000') | (df['idade'] == '999') | (df['idade'] == ''), 'idade'] = None
         df_none = df[df['idade'].isnull()]
         df_not_none = df[~df['idade'].isnull()]
 
         df_not_none = df_not_none.assign(
-            idademinutos=lambda x: x['idade'].apply(
-                lambda y: y[1:] if y[0] == '0' else None).astype('Int64'),
-            idadehoras=lambda x: x['idade'].apply(
-                lambda y: y[1:] if y[0] == '1' else None).astype('Int64'),
-            idadedias=lambda x: x['idade'].apply(
-                lambda y: y[1:] if y[0] == '2' else None).astype('Int64'),
-            idademeses=lambda x: x['idade'].apply(
-                lambda y: y[1:] if y[0] == '3' else None).astype('Int64'),
-            idadeanos=lambda x: x['idade'].apply(lambda y: y[1:] if y[0] == '4' else (
-                '1' + y[1:]) if y[0] == '5' else None).astype('Int64')
+            idademinutos=lambda x: x['idade'].apply(lambda y: y[1:] if y[0] == '0' else None).astype('Int64'),
+            idadehoras=lambda x: x['idade'].apply(lambda y: y[1:] if y[0] == '1' else None).astype('Int64'),
+            idadedias=lambda x: x['idade'].apply(lambda y: y[1:] if y[0] == '2' else None).astype('Int64'),
+            idademeses=lambda x: x['idade'].apply(lambda y: y[1:] if y[0] == '3' else None).astype('Int64'),
+            idadeanos=lambda x: x['idade'].apply(lambda y: y[1:] if y[0] == '4' else ('1' + y[1:]) if y[0] == '5' else None).astype('Int64')
         )
 
         df = pd.concat([df_not_none, df_none])
@@ -128,39 +107,31 @@ def treat_sim(df):
             '12 anos ou mais'   if y == '5' else
             '9 a 11 anos'       if y == '8' else
             None))
-    
-    #if 'esc2010' in df.columns:
-    #    df['esc2010'] = df['esc2010'].apply(lambda x: None if x.strip() == '' else x.strip())
-    
-    #if 'seriescfal' in df.columns:
-    #    df['seriescfal'] = df['seriescfal'].apply(lambda x: None if x.strip() == '' else x.strip())
 
     if 'ocup' in df.columns:
         if not 'dtobito' in df.columns:
             raise "The variable DTOBITO is needed to preprocess the variable OCUP."
         else:
-            df = df.merge(
-                right=df_ocupacao,
-                how='left',
-                left_on='ocup',
-                right_on='cod'
-            ).merge(
-                right=df_cbo,
-                how='left',
-                left_on='ocup',
-                right_on='cod')
+            df = df.merge(right=df_ocupacao, how='left', left_on='ocup', right_on='cod')
+            del df['cod']
+
+            df = df.merge(right=df_cbo, how='left', left_on='ocup', right_on='cod')
 
             df.loc[df['ano_morte'] <= 2005, 'ocup'] = df.loc[df['ano_morte'] <= 2005]['nm_ocup']
             df.loc[df['ano_morte'] > 2005, 'ocup'] = df.loc[df['ano_morte'] > 2005]['nm_cbo']
             df.loc[df['ano_morte'].isnull(), 'ocup'] = None
 
-            del df['nm_ocup'], df['nm_cbo']
+            del df['nm_ocup'], df['nm_cbo'], df['cod']
 
     if 'codmunres' in df.columns:
         df_mun = df_municipios[['MUNCOD', 'MUNNOME', 'UFCOD']]
         df_mun = df_mun.rename(columns={'MUNCOD': 'codmunres', 'MUNNOME': 'nomemunres', 'UFCOD': 'codufres'})
 
         df = pd.merge(left=df, right=df_mun, how='left', on='codmunres')
+
+        df['codmunres'] = df['codmunres'].apply(lambda x: None if x.strip() == '' else x.strip())
+        df['nomemunres'] = df['nomemunres'].apply(lambda x: None if x.strip() == '' else x.strip())
+        df['codufres'] = df['codufres'].apply(lambda x: None if x.strip() == '' else x.strip())
 
     if 'lococor' in df.columns:
         df['lococor'] = df['lococor'].apply(
@@ -171,18 +142,6 @@ def treat_sim(df):
             'Via pública'                       if x == '4' else
             'Outros'                            if x == '5' else
             None)
-
-    #if 'codestab' in df.columns:
-    #    df['codestab'] = df['codestab'].apply(lambda x: None if x.strip() == '' else x.strip())
-#
-    #if 'estabdescr' in df.columns:
-    #    df['estabdescr'] = df['estabdescr'].apply(lambda x: None if x.strip() == '' else x.strip())
-#
-    #if 'codmunocor' in df.columns:
-    #    df['codmunocor'] = df['codmunocor'].apply(lambda x: None if x.strip() == '' else x.strip())
-#
-    #if 'idademae' in df.columns:
-    #    df['idademae'] = df['idademae'].apply(lambda x: None if x.strip() == '' else x.strip())
 
     if 'escmae' in df.columns:
         df = df.assign(escmae=lambda x: x['escmae'].apply(
@@ -196,38 +155,20 @@ def treat_sim(df):
             None)
         )
 
-    #if 'escmae2010' in df.columns:
-    #    df['escmae2010'] = df['escmae2010'].apply(lambda x: None if x.strip() == '' else x.strip())
-#
-    #if 'seriescmae' in df.columns:
-    #    df['seriescmae'] = df['seriescmae'].apply(lambda x: None if x.strip() == '' else x.strip())
-
     if 'ocupmae' in df.columns:
         if not 'dtobito' in df.columns:
             raise "The variable DTOBITO is needed to preprocess the variable OCUP."
         else:
-            df = df.merge(
-                right=df_ocupacao,
-                how='left',
-                left_on='ocupmae',
-                right_on='cod'
-            ).merge(
-                right=df_cbo,
-                how='left',
-                left_on='ocupmae',
-                right_on='cod')
+            df = df.merge(right=df_ocupacao, how='left', left_on='ocupmae', right_on='cod')
+            del df['cod']
+            
+            df = df.merge(right=df_cbo, how='left', left_on='ocupmae', right_on='cod')
 
             df.loc[df['ano_morte'] <= 2005, 'ocupmae'] = df.loc[df['ano_morte'] <= 2005]['nm_ocup']
             df.loc[df['ano_morte'] > 2005, 'ocupmae'] = df.loc[df['ano_morte'] > 2005]['nm_cbo']
             df.loc[df['ano_morte'].isnull(), 'ocupmae'] = None
 
-            del df['nm_ocup'], df['nm_cbo'], df['ano_morte']
-
-    #if 'qtdfilvivo' in df.columns:
-    #    df['qtdfilvivo'] = df['qtdfilvivo'].apply(lambda x: None if x.strip() == '' else x.strip())
-#
-    #if 'qtdfilmort' in df.columns:
-    #    df['qtdfilmort'] = df['qtdfilmort'].apply(lambda x: None if x.strip() == '' else x.strip())
+            del df['nm_ocup'], df['nm_cbo'], df['cod'], df['ano_morte']
 
     if 'gravidez' in df.columns:
         df['gravidez'] = df['gravidez'].apply(
@@ -236,22 +177,19 @@ def treat_sim(df):
             'Dupla'             if x == '2' else
             'Tríplice e mais'   if x == '3' else
             None)
-    
-    #if 'semagestac' in df.columns:
-    #    df['semagestac'] = df['semagestac'].apply(lambda x: None if x.strip() == '' else x.strip())
 
     if 'gestacao' in df.columns:
         df['gestacao'] = df['gestacao'].apply(
             lambda x:
-            '21 a 27 semanas' if x == 'A' else
-            'Menos de 22 semanas' if x == '1' else
-            '22 a 27 semanas' if x == '2' else
-            '28 a 31 semanas' if x == '3' else
-            '32 a 36 semanas' if x == '4' else
-            '37 a 41 semanas' if x == '5' else
-            '42 semanas e mais' if x == '6' else
-            '28 semanas e mais' if x == '7' else
-            '28 a 36 semanas' if x == '8' else
+            '21 a 27 semanas'       if x == 'A' else
+            'Menos de 22 semanas'   if x == '1' else
+            '22 a 27 semanas'       if x == '2' else
+            '28 a 31 semanas'       if x == '3' else
+            '32 a 36 semanas'       if x == '4' else
+            '37 a 41 semanas'       if x == '5' else
+            '42 semanas e mais'     if x == '6' else
+            '28 semanas e mais'     if x == '7' else
+            '28 a 36 semanas'       if x == '8' else
             None)
 
     if 'parto' in df.columns:
@@ -270,10 +208,7 @@ def treat_sim(df):
             None)
 
     if 'peso' in df.columns:
-        df['peso'] = df['peso'].apply(lambda x: None if x.strip() == '' else x.strip()).astype('Int64')
-    
-    #if 'tpmorteoco' in df.columns:
-    #    df['tpmorteoco'] = df['tpmorteoco'].apply(lambda x: None if x.strip() == '' else x.strip())
+        df['peso'] = df['peso'].astype('Int64')
 
     if 'obitograv' in df.columns:
         df['obitograv'] = df['obitograv'].apply(
@@ -317,33 +252,6 @@ def treat_sim(df):
             'Sim'   if x == '1' else
             'Não'   if x == '2' else
             None)
-    
-    #if 'linhaa' in df.columns:
-    #    df['linhaa'] = df['linhaa'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'linhab' in df.columns:
-    #    df['linhab'] = df['linhab'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'linhac' in df.columns:
-    #    df['linhac'] = df['linhac'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'linhad' in df.columns:
-    #    df['linhad'] = df['linhad'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'linhaii' in df.columns:
-    #    df['linhaii'] = df['linhaii'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'causabas' in df.columns:
-    #    df['causabas'] = df['causabas'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'cb_pre' in df.columns:
-    #    df['cb_pre'] = df['cb_pre'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'crm' in df.columns:
-    #    df['crm'] = df['crm'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'comunsvoim' in df.columns:
-    #    df['comunsvoim'] = df['comunsvoim'].apply(lambda x: None if x.strip() == '' else x.strip())
 
     if 'dtatestado' in df.columns:
         df.loc[df['dtatestado'] == '', 'dtatestado'] = None
@@ -376,9 +284,6 @@ def treat_sim(df):
             'Família'               if x == '3' else
             'Outro'                 if x == '4' else
             None)
-    
-    #if 'numerolote' in df.columns:
-    #    df['numerolote'] = df['numerolote'].apply(lambda x: None if x.strip() == '' else x.strip())
 
     if 'tppos' in df.columns:
         df['tppos'] = df['tppos'].apply(
@@ -390,9 +295,6 @@ def treat_sim(df):
     if 'dtinvestig' in df.columns:
         df.loc[df['dtinvestig'] == '', 'dtinvestig'] = None
         df['dtinvestig'] = pd.to_datetime(df['dtinvestig'], format='%d%m%Y')
-    
-    #if 'causabas_o' in df.columns:
-    #    df['causabas_o'] = df['causabas_o'].apply(lambda x: None if x.strip() == '' else x.strip())
 
     if 'dtcadastro' in df.columns:
         df.loc[df['dtcadastro'] == '', 'dtcadastro'] = None
@@ -410,18 +312,6 @@ def treat_sim(df):
                 None
             )
         )
-    
-    #if 'stcodifica' in df.columns:
-    #    df['stcodifica'] = df['stcodifica'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'codificado' in df.columns:
-    #    df['codificado'] = df['codificado'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'versaosist' in df.columns:
-    #    df['versaosist'] = df['versaosist'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'versaoscb' in df.columns:
-    #    df['versaoscb'] = df['versaoscb'].apply(lambda x: None if x.strip() == '' else x.strip())
 
     if 'fonteinv' in df.columns:
         df = df.assign(
@@ -442,74 +332,10 @@ def treat_sim(df):
     if 'dtrecebim' in df.columns:
         df.loc[df['dtrecebim'] == '', 'dtrecebim'] = None
         df['dtrecebim'] = pd.to_datetime(df['dtrecebim'], format='%d%m%Y')
-    
-    #if 'atestado' in df.columns:
-    #    df['atestado'] = df['atestado'].apply(lambda x: None if x.strip() == '' else x.strip())
 
     if 'dtrecoriga' in df.columns:
         df.loc[df['dtrecoriga'] == '', 'dtrecoriga'] = None
         df['dtrecoriga'] = pd.to_datetime(df['dtrecoriga'], format='%d%m%Y')
-    
-
-    #if 'causamat' in df.columns:
-    #    df['causamat'] = df['causamat'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'escmaeagr1' in df.columns:
-    #    df['escmaeagr1'] = df['escmaeagr1'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'escfalagr1' in df.columns:
-    #    df['escfalagr1'] = df['escfalagr1'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'stdoepidem' in df.columns:
-    #    df['stdoepidem'] = df['stdoepidem'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'stdonova' in df.columns:
-    #    df['stdonova'] = df['stdonova'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'difdata' in df.columns:
-    #    df['difdata'] = df['difdata'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'nudiasobco' in df.columns:
-    #    df['nudiasobco'] = df['nudiasobco'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'nudiasobin' in df.columns:
-    #    df['nudiasobin'] = df['nudiasobin'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'dtcadinv' in df.columns:
-    #    df['dtcadinv'] = df['dtcadinv'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'tpobitocor' in df.columns:
-    #    df['tpobitocor'] = df['tpobitocor'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'dtconinv' in df.columns:
-    #    df['dtconinv'] = df['dtconinv'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'fontes' in df.columns:
-    #    df['fontes'] = df['fontes'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'tpresginfo' in df.columns:
-    #    df['tpresginfo'] = df['tpresginfo'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'tpnivelinv' in df.columns:
-    #    df['tpnivelinv'] = df['tpnivelinv'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'nudiasinf' in df.columns:
-    #    df['nudiasinf'] = df['nudiasinf'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'dtcadinf' in df.columns:
-    #    df['dtcadinf'] = df['dtcadinf'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'morteparto' in df.columns:
-    #    df['morteparto'] = df['morteparto'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'dtconcaso' in df.columns:
-    #    df['dtconcaso'] = df['dtconcaso'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'fontesinf' in df.columns:
-    #    df['fontesinf'] = df['fontesinf'].apply(lambda x: None if x.strip() == '' else x.strip())
-    #
-    #if 'altcausa' in df.columns:
-    #    df['altcausa'] = df['altcausa'].apply(lambda x: None if x.strip() == '' else x.strip())
 
     return df
 

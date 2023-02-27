@@ -1,14 +1,14 @@
 from airflow import DAG
-from STG_SIM import run_sim
+from stg.STG_SIM import run_sim
 from datetime import datetime
-from CONNECTION import create_connection
+from DW_TOOLS import create_connection
 from airflow.operators.python import PythonOperator
 
 
 cwd = '/opt/airflow/dags/scripts/'
 
 with DAG(
-    'stg_dag',
+    'DAG_MAIN',
     start_date=datetime(2023, 2, 25),
     schedule_interval='@daily',
     catchup=False
