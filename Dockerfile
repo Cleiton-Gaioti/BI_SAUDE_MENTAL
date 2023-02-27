@@ -6,17 +6,11 @@ USER root
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
-         vim \
-         r-base \
+    vim \
+  && apt-get install -y --reinstall gcc \
   && apt-get autoremove -yqq --purge \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
-
-RUN echo -e "AIRFLOW_UID=$(id -u)" > .env
-
-RUN sudo usermod -a -G staff root
-RUN sudo chmod 777 -R /usr/local/lib/R/site-library
-RUN R -e "install.packages(c('devtools', 'RPostgres', 'remotes'), dependencies=TRUE)"
 
 USER airflow
 
