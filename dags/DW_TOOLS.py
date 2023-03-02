@@ -37,16 +37,10 @@ def load_executemany(list_values, schema, table_name, ref_table, conn):
     connection.close()
 
 
-def create_schema(con, schema):
-    con.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
+def create_struct_db(con, file):
+    with open(file, 'r') as file:
+        con.execute(file.read())
 
 
 def truncate_table(con, schema, table_name):
-    connection = con.raw_connection()
-    con_cursor = connection.cursor()
-
-    con_cursor.execute(f'TRUNCATE TABLE "{schema}"."{table_name}"')
-
-    con_cursor.close()
-    connection.commit()
-    connection.close()
+    con.execute(f'TRUNCATE TABLE "{schema}"."{table_name}"')
