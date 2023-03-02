@@ -3,9 +3,11 @@ from datetime import datetime
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.python import PythonOperator
 
-from DW_TOOLS import create_connection
+from DW_TOOLS import create_connection, create_schema
 from stg.STG_SIM import run_sim
+from stg.STG_UF import run_stg_uf
 from stg.STG_CBO import run_stg_cbo
+from stg.STG_CID10 import run_cid10
 from stg.STG_OCUPACAO import run_stg_ocupacao
 from stg.STG_MUNICIPIOS import run_stg_municipios
 from stg.STG_NATURALIDADE import run_stg_naturalidade
@@ -25,6 +27,8 @@ with DAG(
         port=5432)
     
     with TaskGroup(group_id='stages') as stages:
+        create_schema(con, "stg")
+
         stg_sim = PythonOperator(
             task_id='stg_sim',
             python_callable=run_sim,
@@ -34,18 +38,35 @@ with DAG(
                 'end_year': 2020,
                 'con': con,
                 'schema': 'stg',
-                'tb_name': 'stg_sim_2010_2020'},
+                'tb_name': 'stg_sim'},
             dag=dag)
         
         stg_municipios = PythonOperator(
             task_id='stg_municipios',
             python_callable=run_stg_municipios,
             op_kwargs={
-                'file_path': "dags/arquivos/tabMunicipios.csv",
                 'con': con,
                 'schema': 'stg',
                 'tb_name': 'stg_municipios'},
             dag=dag)
+        
+        stg_uf = PythonOperator(
+            task_id='stg_uf',
+            python_callable=run_stg_uf,
+            op_kwargs={
+                'con': con,
+                'schema': 'stg',
+                'tb_name': 'stg_uf'},
+            dag=dag)
+        
+        stg_cid10 = PythonOperator(
+            task_id='stg_cid10',
+            python_callable=run_cid10,
+            op_kwargs={
+                'con': con,
+                'schema': 'stg',
+                'tb_name': 'stg_cid10'},
+            dag=dag) 
         
         stg_naturalidade = PythonOperator(
             task_id='stg_naturalidade',
@@ -75,4 +96,4 @@ with DAG(
                 'con': con,
                 'schema': 'stg',
                 'tb_name': 'stg_cbo'},
-            dag=dag)    
+            dag=dag)       

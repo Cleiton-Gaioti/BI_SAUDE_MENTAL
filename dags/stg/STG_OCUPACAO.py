@@ -11,9 +11,6 @@ def extract_stg_ocupacao(file_path, sep):
 @cronometrar
 def treat_stg_ocupacao(df):
     df.columns = [col.lower() for col in df.columns]
-
-    df = df.replace({'': None, '<NA>': None, np.nan: None, 'nan': None})
-
     df = df.astype({'cod': 'Int64', 'nome': str})
 
     return df
