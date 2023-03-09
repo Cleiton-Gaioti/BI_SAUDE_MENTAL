@@ -13,6 +13,8 @@ with DAG(
     schedule_interval='@daily',
     catchup=False
 ) as dag:
+    schema = "stg"
+
     con = create_connection(
         server='10.3.152.103', 
         database='saude_mental', 
@@ -25,17 +27,17 @@ with DAG(
         python_callable=create_struct_db,
         op_kwargs={"con": con, "file": "dags/sql/DDL_STAGING_AREA.sql"},
         dag=dag)
-    
+
     with TaskGroup(group_id='stages') as stages:
         stg_sim = PythonOperator(
             task_id='stg_sim',
             python_callable=run_sim,
             op_kwargs={
-                'uf': 'ES',
+                'ufs': 'all',
                 'start_year': 2010,
                 'end_year': 2020,
                 'con': con,
-                'schema': 'stg',
+                'schema': schema,
                 'tb_name': 'stg_sim'},
             dag=dag)
         
@@ -44,7 +46,7 @@ with DAG(
             python_callable=run_stg_municipios,
             op_kwargs={
                 'con': con,
-                'schema': 'stg',
+                'schema': schema,
                 'tb_name': 'stg_municipios'},
             dag=dag)
         
@@ -53,7 +55,7 @@ with DAG(
             python_callable=run_stg_uf,
             op_kwargs={
                 'con': con,
-                'schema': 'stg',
+                'schema': schema,
                 'tb_name': 'stg_uf'},
             dag=dag)
         
@@ -62,7 +64,7 @@ with DAG(
             python_callable=run_cid10_capitulos,
             op_kwargs={
                 'con': con,
-                'schema': 'stg',
+                'schema': schema,
                 'tb_name': 'stg_cid10_capitulos'},
             dag=dag) 
         
@@ -71,7 +73,7 @@ with DAG(
             python_callable=run_cid10_grupos,
             op_kwargs={
                 'con': con,
-                'schema': 'stg',
+                'schema': schema,
                 'tb_name': 'stg_cid10_grupos'},
             dag=dag) 
         
@@ -80,7 +82,7 @@ with DAG(
             python_callable=run_cid10_categorias,
             op_kwargs={
                 'con': con,
-                'schema': 'stg',
+                'schema': schema,
                 'tb_name': 'stg_cid10_categorias'},
             dag=dag) 
         
@@ -89,7 +91,7 @@ with DAG(
             python_callable=run_cid10_subcategorias,
             op_kwargs={
                 'con': con,
-                'schema': 'stg',
+                'schema': schema,
                 'tb_name': 'stg_cid10_subcategorias'},
             dag=dag) 
         
@@ -98,9 +100,9 @@ with DAG(
             python_callable=run_stg_naturalidade,
             op_kwargs={
                 'con': con,
-                'schema': 'stg',
+                'schema': schema,
                 'tb_name': 'stg_naturalidade',
-                "sep": ';'},
+                "sep": ','},
             dag=dag)
         
         stg_ocupacao = PythonOperator(
@@ -108,7 +110,7 @@ with DAG(
             python_callable=run_stg_ocupacao,
             op_kwargs={
                 'con': con,
-                'schema': 'stg',
+                'schema': schema,
                 'tb_name': 'stg_ocupacao',
                 "sep": ','},
             dag=dag)
@@ -118,7 +120,7 @@ with DAG(
             python_callable=run_stg_cbo,
             op_kwargs={
                 'con': con,
-                'schema': 'stg',
+                'schema': schema,
                 'tb_name': 'stg_cbo'},
             dag=dag)       
 

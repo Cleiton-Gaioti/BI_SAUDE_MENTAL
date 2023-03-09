@@ -4,25 +4,41 @@ from pysus.online_data.SIM import download
 
 
 @dwt.cronometrar
-def extract_sim(uf, start_year, end_year):
-    df = pd.concat([download(uf, year) for year in range(start_year, end_year + 1)])
+def extract_sim(uf, year):
+    df = download(uf, year)
 
     return df
 
 
-@dwt.cronometrar
-def treat_sim(df):
+def treat_sim(df, columns):
     df.columns = [col_name.lower() for col_name in df.columns]
-    df = df.astype(str).replace({'': None, 'nan': None})
+
+    for col in columns:
+        if col not in df.columns:
+            df.insert(0, col, None)
+
+    df = df[columns]
+
+    df = df.astype(str).replace({'': None, 'nan': None, 'null': None, 'NULL': None, 'None': None})
 
     return df
 
 
-def load_sim(df, con, schema, tb_name, chunck):
-    df.to_sql(name=tb_name, con=con, schema=schema, if_exists='append', index=False, chunksize=chunck, method='multi')
+def load_sim(df, con, schema, tb_name):
+    dwt.load_with_csv(df, con, schema, tb_name)
 
 
-def run_sim(uf, start_year, end_year, con, schema, tb_name, chunck=10000):
+def run_sim(ufs, start_year, con, schema, tb_name, end_year=None, chunck=10000):
     dwt.truncate_table(con, schema, tb_name)
+    columns = dwt.get_table_columns(con, schema, tb_name)
 
-    extract_sim(uf, start_year, end_year).pipe(treat_sim).pipe(load_sim, con, schema, tb_name, chunck)
+    if not end_year:
+        end_year = start_year
+
+    if isinstance(ufs, str):
+        if ufs.lower() == 'all':
+            ufs = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO']
+        else:
+            ufs = [ufs]
+
+    [[extract_sim(uf, year).pipe(treat_sim, columns).pipe(load_sim, con, schema, tb_name) for year in range(start_year, end_year+1)] for uf in ufs]
