@@ -100,7 +100,7 @@ with DAG(
                 'con': con,
                 'schema': 'stg',
                 'tb_name': 'stg_naturalidade',
-                "sep": ','},
+                "sep": ';'},
             dag=dag)
         
         stg_ocupacao = PythonOperator(

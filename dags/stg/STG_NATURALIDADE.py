@@ -23,6 +23,6 @@ def run_stg_naturalidade(con, schema, tb_name, file_path=None, sep=";"):
     dwt.truncate_table(con, schema, tb_name)
 
     if not file_path:
-        file_path = "https://github.com/rfsaldanha/microdatasus/blob/master/data-raw/tabOcupacao.csv?raw=true"
+        file_path = "https://github.com/rfsaldanha/microdatasus/blob/master/data-raw/tabNaturalidade.csv?raw=true"
 
     extract_stg_naturalidade(file_path, sep).pipe(treat_stg_naturalidade).pipe(load_stg_naturalidade, con, schema, tb_name)
