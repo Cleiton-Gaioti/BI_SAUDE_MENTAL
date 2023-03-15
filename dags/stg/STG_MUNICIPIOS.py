@@ -1,16 +1,26 @@
+import pandas as pd
 import DW_TOOLS as dwt
-from pysus.online_data.SIM import get_municipios
 
 
 @dwt.cronometrar
 def extract_stg_municipios():
-    return get_municipios()
+    return pd.read_json('https://servicodados.ibge.gov.br/api/v1/localidades/municipios?view=nivelado', orient='records')
 
 
 @dwt.cronometrar
 def treat_stg_municipios(df):
     df.columns = [col.lower() for col in df.columns]
-    df.replace('', None, inplace=True)
+
+    dtypes = {
+        "municipio-id": "Int64", 
+        "microrregiao-id": "Int64", 
+        "mesorregiao-id": "Int64", 
+        "regiao-imediata-id": "Int64", 
+        "regiao-intermediaria-id": "Int64", 
+        "uf-id": "Int64", 
+        "regiao-id": "Int64"}
+
+    df = df.astype(dtypes)
 
     return df
 

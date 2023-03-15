@@ -1,3 +1,4 @@
+import pandas as pd
 from time import time
 import sqlalchemy as sa
 from io import StringIO
@@ -20,23 +21,43 @@ def cronometrar(fun):
     return wrapper
 
 
+def read_table_from_sql(query, con):
+    with con.connect() as conn:
+        query = sa.text(query)
+
+        return pd.read_sql_query(query, conn)
+
+
 def load_with_csv(df, con, schema, tb_name):
     cols = [f'"{col}"' for col in df.columns]
     cols.sort()
 
     connection = con.raw_connection()
-    cur = connection.cursor()
-    output = StringIO()
+    
+    with connection.cursor() as cur:
+        with StringIO() as output:
 
-    df.to_csv(output, sep='|', header=False, index=False)
-
-    output.seek(0)
-    cur.copy_expert(f"COPY {schema}.{tb_name} ({', '.join(cols)}) FROM STDIN (DELIMITER '|', NULL '')", output)
+            df.to_csv(output, sep=';', header=False, index=False)
+            output.seek(0)
+            cur.copy_expert(f"COPY {schema}.{tb_name} ({', '.join(cols)}) FROM STDIN (DELIMITER ';', NULL '')", output)
+    
     connection.commit()
-
-    output.close()
-    cur.close()
     connection.close()
+
+
+def get_max_sk(con, schema, tb_name, col_name):
+    with con.connect() as conn:
+        query = sa.text(f"SELECT MAX({col_name}) FROM {schema}.{tb_name}")
+        result = conn.execute(query).fetchone()[0]
+
+        return result if result else 0
+    
+
+def get_dimension_size(con, schema, tb_name):
+    with con.connect() as conn:
+        query = sa.text(f'SELECT COUNT(1) FROM {schema}.{tb_name}')
+
+        return conn.execute(query).fetchone()[0]
 
 
 def create_struct_db(con, file):
@@ -45,18 +66,20 @@ def create_struct_db(con, file):
 
 
 def truncate_table(con, schema, table_name):
-    con.execute(f'TRUNCATE TABLE "{schema}"."{table_name}"')
+    with con.connect() as conn:
+        query = sa.text(f'TRUNCATE TABLE "{schema}"."{table_name}"')
+        conn.execute(query)
 
 
 def get_table_columns(con, schema, tb_name):
-    query = f"""
-        SELECT DISTINCT column_name
-        FROM information_schema.columns
-        WHERE table_schema = '{schema}'
-        AND table_name = '{tb_name}'
-    """
+    with con.connect() as conn:
+        query = sa.text(f"""
+            SELECT DISTINCT column_name
+            FROM information_schema.columns
+            WHERE table_schema = '{schema}'
+            AND table_name = '{tb_name}'
+        """)
 
-    result = con.execute(query)
-    cols = [r[0] for r in result.fetchall()]
+        result = conn.execute(query)
 
-    return cols
+        return [r[0] for r in result.fetchall()]

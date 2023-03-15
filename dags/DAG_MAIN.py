@@ -3,8 +3,9 @@ from datetime import datetime
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.python import PythonOperator
 
-from DW_TOOLS import create_connection, create_struct_db
+from dw import *
 from stg import *
+import DW_TOOLS as dwt
 
 
 with DAG(
@@ -13,31 +14,38 @@ with DAG(
     schedule_interval='@daily',
     catchup=False
 ) as dag:
-    schema = "stg"
-
-    con = create_connection(
+    con = dwt.create_connection(
         server='10.3.152.103', 
         database='saude_mental', 
         username='postgres', 
         password='postgres', 
         port=5432)
     
-    create_struct_db = PythonOperator(
-        task_id='create_struct_db',
-        python_callable=create_struct_db,
-        op_kwargs={"con": con, "file": "dags/sql/DDL_STAGING_AREA.sql"},
-        dag=dag)
+    with TaskGroup(group_id='create_struct_db') as struct_db:
+        stg_schema = "stg"
+
+        create_struct_stg = PythonOperator(
+            task_id='create_struct_stg',
+            python_callable=dwt.create_struct_db,
+            op_kwargs={"con": con, "file": "dags/sql/DDL_STAGING_AREA.sql"},
+            dag=dag)
+
+        create_struct_dw = PythonOperator(
+            task_id='create_struct_dw',
+            python_callable=dwt.create_struct_db,
+            op_kwargs={"con": con, "file": "dags/sql/DDL_DW.sql"},
+            dag=dag)
 
     with TaskGroup(group_id='stages') as stages:
         stg_sim = PythonOperator(
             task_id='stg_sim',
             python_callable=run_sim,
             op_kwargs={
-                'ufs': 'all',
+                'ufs': 'ES',
                 'start_year': 2010,
                 'end_year': 2020,
                 'con': con,
-                'schema': schema,
+                'schema': stg_schema,
                 'tb_name': 'stg_sim'},
             dag=dag)
         
@@ -46,17 +54,8 @@ with DAG(
             python_callable=run_stg_municipios,
             op_kwargs={
                 'con': con,
-                'schema': schema,
+                'schema': stg_schema,
                 'tb_name': 'stg_municipios'},
-            dag=dag)
-        
-        stg_uf = PythonOperator(
-            task_id='stg_uf',
-            python_callable=run_stg_uf,
-            op_kwargs={
-                'con': con,
-                'schema': schema,
-                'tb_name': 'stg_uf'},
             dag=dag)
         
         stg_cid10_capitulos = PythonOperator(
@@ -64,17 +63,8 @@ with DAG(
             python_callable=run_cid10_capitulos,
             op_kwargs={
                 'con': con,
-                'schema': schema,
+                'schema': stg_schema,
                 'tb_name': 'stg_cid10_capitulos'},
-            dag=dag) 
-        
-        stg_cid10_grupos = PythonOperator(
-            task_id='stg_cid10_grupos',
-            python_callable=run_cid10_grupos,
-            op_kwargs={
-                'con': con,
-                'schema': schema,
-                'tb_name': 'stg_cid10_grupos'},
             dag=dag) 
         
         stg_cid10_categorias = PythonOperator(
@@ -82,7 +72,7 @@ with DAG(
             python_callable=run_cid10_categorias,
             op_kwargs={
                 'con': con,
-                'schema': schema,
+                'schema': stg_schema,
                 'tb_name': 'stg_cid10_categorias'},
             dag=dag) 
         
@@ -91,18 +81,26 @@ with DAG(
             python_callable=run_cid10_subcategorias,
             op_kwargs={
                 'con': con,
-                'schema': schema,
+                'schema': stg_schema,
                 'tb_name': 'stg_cid10_subcategorias'},
-            dag=dag) 
+            dag=dag)
         
-        stg_naturalidade = PythonOperator(
-            task_id='stg_naturalidade',
-            python_callable=run_stg_naturalidade,
+        stg_uf = PythonOperator(
+            task_id='stg_uf',
+            python_callable=run_stg_uf,
             op_kwargs={
                 'con': con,
-                'schema': schema,
-                'tb_name': 'stg_naturalidade',
-                "sep": ','},
+                'schema': stg_schema,
+                'tb_name': 'stg_uf'},
+            dag=dag)
+        
+        stg_pais = PythonOperator(
+            task_id='stg_pais',
+            python_callable=run_stg_pais,
+            op_kwargs={
+                'con': con,
+                'schema': stg_schema,
+                'tb_name': 'stg_pais'},
             dag=dag)
         
         stg_ocupacao = PythonOperator(
@@ -110,7 +108,7 @@ with DAG(
             python_callable=run_stg_ocupacao,
             op_kwargs={
                 'con': con,
-                'schema': schema,
+                'schema': stg_schema,
                 'tb_name': 'stg_ocupacao',
                 "sep": ','},
             dag=dag)
@@ -120,8 +118,30 @@ with DAG(
             python_callable=run_stg_cbo,
             op_kwargs={
                 'con': con,
-                'schema': schema,
+                'schema': stg_schema,
                 'tb_name': 'stg_cbo'},
-            dag=dag)       
+            dag=dag)
 
-    create_struct_db >> stages
+
+    with TaskGroup(group_id='dimensoes') as dimensoes:
+        dw_schema = 'dw'
+
+        d_municipio = PythonOperator(
+            task_id='d_municipio',
+            python_callable=run_d_municipio,
+            op_kwargs={
+                'con': con,
+                'schema': dw_schema,
+                'tb_name': 'd_municipio'},
+            dag=dag)
+
+        d_naturalidade = PythonOperator(
+            task_id='d_naturalidade',
+            python_callable=run_d_naturalidade,
+            op_kwargs={
+                'con': con,
+                'schema': dw_schema,
+                'tb_name': 'd_naturalidade'},
+            dag=dag)
+
+    struct_db >> stages >> dimensoes

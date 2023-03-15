@@ -1,0 +1,2 @@
+from dw.D_MUNICIPIO import run_d_municipio
+from dw.D_NATURALIDADE import run_d_naturalidade

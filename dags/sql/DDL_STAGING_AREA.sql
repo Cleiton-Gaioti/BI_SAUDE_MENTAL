@@ -12,72 +12,62 @@ CREATE TABLE IF NOT EXISTS stg.stg_cid10_capitulos (
 );
 
 CREATE TABLE IF NOT EXISTS stg.stg_cid10_categorias (
-	cat           text,
-	classif       text,
-	descricao     text,
-	descrabrev    text,
-	refer         text,
-	excluidos     float,
+	cat           	text,
+	classif       	text,
+	descricao     	text,
+	descrabrev    	text,
+	refer         	text,
+	excluidos     	float,
 	"unnamed: 6"    float
 );
 
-CREATE TABLE IF NOT EXISTS stg.stg_cid10_grupos (
-	codigo          text,
-	descricao       text,
-	descricao_breve text
-);
-
 CREATE TABLE IF NOT EXISTS stg.stg_cid10_subcategorias (
-	subcat        text,
-	classif       text,
-	restrsexo     text,
-	causaobito    text,
-	descricao     text,
-	descrabrev    text,
-	refer         text,
-	excluidos     text,
+	subcat        	text,
+	classif       	text,
+	restrsexo     	text,
+	causaobito    	text,
+	descricao     	text,
+	descrabrev    	text,
+	refer         	text,
+	excluidos     	text,
 	"unnamed: 8"    float
 );
 
 CREATE TABLE IF NOT EXISTS stg.stg_municipios (
-	muncod      int,
-	muncoddv    int,
-	situacao    text,
-	munsinp     int,
-	munsiafi    int,
-	munnome     text,
-	munnomex    text,
-	observ      text,
-	munsinon    text,
-	munsinondv  text,
-	amazonia    text,
-	fronteira   text,
-	capital     text,
-	ufcod       int,
-	mesocod     int,
-	microcod    int,
-	msaudcod    int,
-	rsaudcod    int,
-	csaudcod    int,
-	rmetrcod    int,
-	aglcod      int,
-	anoinst     int,
-	anoext      int,
-	sucessor    int,
-	latitude    float,
-	longitude   float,
-	altitude    float,
-	area        float
-);
-
-CREATE TABLE IF NOT EXISTS stg.stg_naturalidade (
-	cod     int,
-	nome    text
+	"municipio-id"				int,
+	"municipio-nome"			text,
+	"microrregiao-id"			int,
+	"microrregiao-nome"			text,
+	"mesorregiao-id"			int,
+	"mesorregiao-nome"			text,
+	"regiao-imediata-id"		int,
+	"regiao-imediata-nome"		text,
+	"regiao-intermediaria-id"	int,
+	"regiao-intermediaria-nome"	text,
+	"uf-id"						int,
+	"uf-sigla"					text,
+	"uf-nome"					text,
+	"regiao-id"					int,
+	"regiao-sigla"				text,
+	"regiao-nome"				text
 );
 
 CREATE TABLE IF NOT EXISTS stg.stg_ocupacao (
 	cod     int,
 	nome    text
+);
+
+CREATE TABLE IF NOT EXISTS stg.stg_pais (
+	"pais-m49"					int,
+	"pais-iso-alpha-2"			text,
+	"pais-iso-alpha-3"			text,
+	"pais-nome"					text,
+	"regiao-intermediaria-m49"	int,
+	"regiao-intermediaria-nome"	text,
+	"sub-regiao-m49"			int,
+	"sub-regiao-nome"			text,
+	"regiao-m49"				int,
+	"regiao-nome"				text
 );
 
 CREATE TABLE IF NOT EXISTS stg.stg_sim (
@@ -180,7 +170,10 @@ CREATE TABLE IF NOT EXISTS stg.stg_sim (
 );
 
 CREATE TABLE IF NOT EXISTS stg.stg_uf (
-	sigla_uf    text,
-	codigo      int,
-	descricao   text
+	"uf-id"			INT,
+	"uf-sigla"		TEXT,
+	"uf-nome"		TEXT,
+	"regiao-id"		INT,
+	"regiao-sigla"	TEXT,
+	"regiao-nome"	TEXT
 );

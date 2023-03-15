@@ -1,5 +1,6 @@
 import pandas as pd
 import DW_TOOLS as dwt
+from ibge.localidades import Estados
 from pysus.online_data.SIM import download
 
 
@@ -37,7 +38,7 @@ def run_sim(ufs, start_year, con, schema, tb_name, end_year=None, chunck=10000):
 
     if isinstance(ufs, str):
         if ufs.lower() == 'all':
-            ufs = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO']
+            ufs = Estados().getSigla()
         else:
             ufs = [ufs]
 
