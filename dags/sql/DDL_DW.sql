@@ -1,24 +1,25 @@
 CREATE SCHEMA IF NOT EXISTS dw;
 
 CREATE TABLE IF NOT EXISTS dw.d_municipio (
-    sk_municipio            INT PRIMARY KEY,
-    cd_municipio            INT,
-    no_municipio            TEXT,
-    cd_microrregiao         INT,
-    no_microrregiao         TEXT,
-    cd_mesorregiao          INT,
-    no_mesorregiao          TEXT,
-    cd_regiao_imediata      INT,
-    no_regiao_imediata      TEXT,
-    cd_regiao_intermediaria INT,
-    no_regiao_intermediaria TEXT,
-    cd_uf                   INT,
-    ds_sigla_uf             TEXT,
-    no_uf                   TEXT,
-    cd_regiao               INT,
-    ds_sigla_regiao         TEXT,
-    no_regiao               TEXT,
-    dt_carga                TIMESTAMP
+    sk_municipio                INT PRIMARY KEY,
+    cd_municipio                INT,
+    cd_municipio_normalizado    INT,
+    no_municipio                TEXT,
+    cd_microrregiao             INT,
+    no_microrregiao             TEXT,
+    cd_mesorregiao              INT,
+    no_mesorregiao              TEXT,
+    cd_regiao_imediata          INT,
+    no_regiao_imediata          TEXT,
+    cd_regiao_intermediaria     INT,
+    no_regiao_intermediaria     TEXT,
+    cd_uf                       INT,
+    ds_sigla_uf                 TEXT,
+    no_uf                       TEXT,
+    cd_regiao                   INT,
+    ds_sigla_regiao             TEXT,
+    no_regiao                   TEXT,
+    dt_carga                    TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS dw.d_naturalidade (
@@ -79,16 +80,16 @@ CREATE TABLE IF NOT EXISTS dw.f_obito (
     sk_cid_causa_obito                  INT REFERENCES dw.d_cid             (sk_cid),
     sk_escolaridade_falecido            INT REFERENCES dw.d_escolaridade    (sk_escolaridade),
     sk_sexo                             INT REFERENCES dw.d_sexo            (sk_sexo),
-    cd_assistencia_medica               INT,
+    cd_registro                        INT,
     ds_assistencia_medica               TEXT,
     ds_atestante                        TEXT,
     ds_circunstancia_obito              TEXT,
-    nu_crm_medico_atestante             INT,
+    nu_crm_medico_atestante             TEXT,
     dt_cadastro                         DATE,
     dt_atestado                         DATE,
     dt_obito                            DATE,
-    dt_hora_obito                       TIME,
     dt_nascimento_falecido              DATE,
     vl_idade_falecido                   INT,
+    ds_unidade_idade_falecido           TEXT,
     dt_carga                            TIMESTAMP
 );

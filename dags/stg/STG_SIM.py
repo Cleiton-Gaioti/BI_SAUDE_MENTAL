@@ -4,13 +4,13 @@ from ibge.localidades import Estados
 from pysus.online_data.SIM import download
 
 
+def extract_sim(ufs, start_year, end_year):
+    years = list(range(start_year, end_year))
+
+    return [pd.read_parquet(file) for file in download(ufs, years)]
+
+
 @dwt.cronometrar
-def extract_sim(uf, year):
-    df = download(uf, year)
-
-    return df
-
-
 def treat_sim(df, columns):
     df.columns = [col_name.lower() for col_name in df.columns]
 
@@ -20,21 +20,18 @@ def treat_sim(df, columns):
 
     df = df[columns]
 
-    df = df.astype(str).replace({'': None, 'nan': None, 'null': None, 'NULL': None, 'None': None})
-
     return df
 
 
-def load_sim(df, con, schema, tb_name):
-    dwt.load_with_csv(df, con, schema, tb_name)
+def load_sim(df, con, schema, tb_name, columns):
+    dwt.load_with_csv(df, con, schema, tb_name, columns)
 
 
-def run_sim(ufs, start_year, con, schema, tb_name, end_year=None, chunck=10000):
+def run_sim(ufs, start_year, con, schema, tb_name, end_year=0):
     dwt.truncate_table(con, schema, tb_name)
     columns = dwt.get_table_columns(con, schema, tb_name)
 
-    if not end_year:
-        end_year = start_year
+    end_year = max(start_year, end_year) + 1
 
     if isinstance(ufs, str):
         if ufs.lower() == 'all':
@@ -42,4 +39,6 @@ def run_sim(ufs, start_year, con, schema, tb_name, end_year=None, chunck=10000):
         else:
             ufs = [ufs]
 
-    [[extract_sim(uf, year).pipe(treat_sim, columns).pipe(load_sim, con, schema, tb_name) for year in range(start_year, end_year+1)] for uf in ufs]
+    df_list= extract_sim(ufs, start_year, end_year)
+    
+    [treat_sim(df, columns).pipe(load_sim, con, schema, tb_name, columns) for df in df_list]

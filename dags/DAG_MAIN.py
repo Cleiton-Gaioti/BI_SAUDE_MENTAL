@@ -1,5 +1,5 @@
 from airflow import DAG
-from datetime import datetime
+from datetime import datetime, timedelta
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.python import PythonOperator
 
@@ -12,7 +12,9 @@ with DAG(
     'DAG_MAIN',
     start_date=datetime(2023, 2, 25),
     schedule_interval='@daily',
-    catchup=False
+    concurrency=3,
+    catchup=False,
+    default_args={"retries": 2, "retry_delay": timedelta(minutes=1)}
 ) as dag:
     con = dwt.create_connection(
         server='10.3.152.103', 
@@ -41,7 +43,7 @@ with DAG(
             task_id='stg_sim',
             python_callable=run_sim,
             op_kwargs={
-                'ufs': 'ES',
+                'ufs': ['ES'],
                 'start_year': 2010,
                 'end_year': 2020,
                 'con': con,
@@ -144,4 +146,58 @@ with DAG(
                 'tb_name': 'd_naturalidade'},
             dag=dag)
 
-    struct_db >> stages >> dimensoes
+        d_ocupacao = PythonOperator(
+            task_id='d_ocupacao',
+            python_callable=run_d_ocupacao,
+            op_kwargs={
+                'con': con,
+                'schema': dw_schema,
+                'tb_name': 'd_ocupacao'},
+            dag=dag)
+
+        d_raca_cor = PythonOperator(
+            task_id='d_raca_cor',
+            python_callable=run_d_raca_cor,
+            op_kwargs={
+                'con': con,
+                'schema': dw_schema,
+                'tb_name': 'd_raca_cor'},
+            dag=dag)
+
+        d_cid = PythonOperator(
+            task_id='d_cid',
+            python_callable=run_d_cid,
+            op_kwargs={
+                'con': con,
+                'schema': dw_schema,
+                'tb_name': 'd_cid'},
+            dag=dag)
+
+        d_escolaridade = PythonOperator(
+            task_id='d_escolaridade',
+            python_callable=run_d_escolaridade,
+            op_kwargs={
+                'con': con,
+                'schema': dw_schema,
+                'tb_name': 'd_escolaridade'},
+            dag=dag)
+
+        d_sexo = PythonOperator(
+            task_id='d_sexo',
+            python_callable=run_d_sexo,
+            op_kwargs={
+                'con': con,
+                'schema': dw_schema,
+                'tb_name': 'd_sexo'},
+            dag=dag)
+
+    f_obito = PythonOperator(
+        task_id='f_obito',
+        python_callable=run_f_obito,
+        op_kwargs={
+            'con': con,
+            'schema': dw_schema,
+            'tb_name': 'f_obito'},
+        dag=dag)
+
+    struct_db >> stages >> dimensoes >> f_obito

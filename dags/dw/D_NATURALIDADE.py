@@ -3,12 +3,13 @@ import datetime as dt
 import DW_TOOLS as dwt
 
 
+@dwt.cronometrar
 def extract_d_naturalidade(con, schema, tb_name):
     query = f"""
         WITH naturalidade AS (
             SELECT DISTINCT
                 sp."pais-m49" AS cd_naturalidade,
-                sp."pais-nome" AS ds_naturalidade,
+                NULLIF(TRIM(sp."pais-nome"), '') AS ds_naturalidade,
                 'PAÍS' AS ds_nivel
             FROM stg.stg_pais sp
             LEFT JOIN stg.stg_uf su
@@ -17,7 +18,7 @@ def extract_d_naturalidade(con, schema, tb_name):
             UNION
             SELECT DISTINCT
                 (su."uf-id" + 800) AS cd_naturalidade,
-                su."uf-nome" AS ds_naturalidade,
+                NULLIF(TRIM(su."uf-nome"), '') AS ds_naturalidade,
                 'UF-BRASIL' AS ds_nivel
             FROM stg.stg_uf su
         )

@@ -28,21 +28,24 @@ def read_table_from_sql(query, con):
         return pd.read_sql_query(query, conn)
 
 
-def load_with_csv(df, con, schema, tb_name):
-    cols = [f'"{col}"' for col in df.columns]
-    cols.sort()
+def load_with_csv(df, con, schema, tb_name, columns, test=False):
+    cols = [f'"{col}"' for col in columns]
 
-    connection = con.raw_connection()
-    
-    with connection.cursor() as cur:
-        with StringIO() as output:
-
-            df.to_csv(output, sep=';', header=False, index=False)
-            output.seek(0)
-            cur.copy_expert(f"COPY {schema}.{tb_name} ({', '.join(cols)}) FROM STDIN (DELIMITER ';', NULL '')", output)
-    
-    connection.commit()
-    connection.close()
+    if test:
+        df.to_csv(f'dags/{tb_name}.csv', sep='|', index=False)
+    else:
+        connection = con.raw_connection()
+        
+        with connection.cursor() as cur:
+            with StringIO() as output:
+                df.to_csv(output, sep='|', header=False, index=False)
+                
+                output.seek(0)
+                print(df.columns)
+                cur.copy_expert(f"COPY {schema}.{tb_name} ({', '.join(cols)}) FROM STDIN (DELIMITER '|', NULL '')", output)
+        
+        connection.commit()
+        connection.close()
 
 
 def get_max_sk(con, schema, tb_name, col_name):

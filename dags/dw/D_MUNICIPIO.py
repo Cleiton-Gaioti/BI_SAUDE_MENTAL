@@ -7,26 +7,27 @@ import DW_TOOLS as dwt
 def extract_d_municipio(con, schema, tb_name):
     query = f"""
         SELECT DISTINCT
-            stg."municipio-id" as cd_municipio
-            , stg."municipio-nome" as no_municipio
-            , stg."microrregiao-id" as cd_microrregiao
-            , stg."microrregiao-nome" as no_microrregiao
-            , stg."mesorregiao-id" as cd_mesorregiao
-            , stg."mesorregiao-nome" as no_mesorregiao
-            , stg."regiao-imediata-id" as cd_regiao_imediata
-            , stg."regiao-imediata-nome" as no_regiao_imediata
-            , stg."regiao-intermediaria-id" as cd_regiao_intermediaria
-            , stg."regiao-intermediaria-nome" as no_regiao_intermediaria
-            , stg."uf-id" as cd_uf
-            , stg."uf-sigla" as ds_sigla_uf
-            , stg."uf-nome" as no_uf
-            , stg."regiao-id" as cd_regiao
-            , stg."regiao-sigla" as ds_sigla_regiao
-            , stg."regiao-nome" as no_regiao
+            st."municipio-id" AS cd_municipio
+            , LEFT(st."municipio-id"::TEXT,6) AS cd_municipio_normalizado
+            , NULLIF(TRIM(st."municipio-nome"), '') AS no_municipio
+            , st."microrregiao-id" AS cd_microrregiao
+            , NULLIF(TRIM(st."microrregiao-nome"), '') AS no_microrregiao
+            , st."mesorregiao-id" AS cd_mesorregiao
+            , NULLIF(TRIM(st."mesorregiao-nome"), '') AS no_mesorregiao
+            , st."regiao-imediata-id" AS cd_regiao_imediata
+            , NULLIF(TRIM(st."regiao-imediata-nome"), '') AS no_regiao_imediata
+            , st."regiao-intermediaria-id" AS cd_regiao_intermediaria
+            , NULLIF(TRIM(st."regiao-intermediaria-nome"), '') AS no_regiao_intermediaria
+            , st."uf-id" AS cd_uf
+            , NULLIF(TRIM(st."uf-sigla"), '') AS ds_sigla_uf
+            , NULLIF(TRIM(st."uf-nome"), '') AS no_uf
+            , st."regiao-id" AS cd_regiao
+            , NULLIF(TRIM(st."regiao-sigla"), '') AS ds_sigla_regiao
+            , NULLIF(TRIM(st."regiao-nome"), '') AS no_regiao
             , NOW() as dt_carga
-        FROM stg.stg_municipios stg
+        FROM stg.stg_municipios st
         LEFT JOIN {schema}.{tb_name} dim
-            ON (stg."municipio-id" = dim.cd_municipio)
+            ON (st."municipio-id" = dim.cd_municipio)
         WHERE dim.cd_municipio IS NULL
     """
 
@@ -39,6 +40,7 @@ def extract_d_municipio(con, schema, tb_name):
 def treat_d_municipio(df, max_sk):
     dtypes = {
         "cd_municipio": "Int64",
+        "cd_municipio_normalizado": "Int64",
         "cd_microrregiao": "Int64",
         "cd_mesorregiao": "Int64",
         "cd_regiao_imediata": "Int64",
@@ -55,11 +57,11 @@ def treat_d_municipio(df, max_sk):
         dt_default = dt.datetime(1900, 1, 1)
 
         df_aux = pd.DataFrame(data = [
-            [-1, -1, 'Não Informado', -1, 'Não Informado', -1, 'Não Informado', -1, 'Não Informado', -1,
+            [-1, -1, -1, 'Não Informado', -1, 'Não Informado', -1, 'Não Informado', -1, 'Não Informado', -1,
              'Não Informado', -1, 'Não Informado', 'Não Informado', -1, 'Não Informado', 'Não Informado', dt_default],
-            [-2, -2, 'Não Aplicável', -2, 'Não Aplicável', -2, 'Não Aplicável', -2, 'Não Aplicável', -2,
+            [-2, -2, -2, 'Não Aplicável', -2, 'Não Aplicável', -2, 'Não Aplicável', -2, 'Não Aplicável', -2,
              'Não Aplicável', -2, 'Não Aplicável', 'Não Aplicável', -2, 'Não Aplicável', 'Não Aplicável', dt_default],
-            [-3, -3, 'Desconhecido', -3, 'Desconhecido', -3, 'Desconhecido', -3, 'Desconhecido', -3,
+            [-3, -3, -3, 'Desconhecido', -3, 'Desconhecido', -3, 'Desconhecido', -3, 'Desconhecido', -3,
              'Desconhecido', -3, 'Desconhecido', 'Desconhecido', -3, 'Desconhecido', 'Desconhecido', dt_default]
         ], columns=df.columns)
 
