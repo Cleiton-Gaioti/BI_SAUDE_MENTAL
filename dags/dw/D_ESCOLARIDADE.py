@@ -39,7 +39,7 @@ def extract_d_escolaridade(con, schema, tb_name):
         FROM escolaridade esc
         LEFT JOIN {schema}.{tb_name} dim
             ON (esc.cd_escolaridade = dim.cd_escolaridade AND esc.nu_serie = dim.nu_serie)
-        WHERE dim.cd_escolaridade IS NULL
+        WHERE esc.cd_escolaridade IS NOT NULL AND dim.cd_escolaridade IS NULL
     """
 
     return dwt.read_table_from_sql(query, con)

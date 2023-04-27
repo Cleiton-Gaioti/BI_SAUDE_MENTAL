@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from time import time
 import sqlalchemy as sa
@@ -21,11 +22,19 @@ def cronometrar(fun):
     return wrapper
 
 
-def read_table_from_sql(query, con):
+def read_table_from_sql(query, con, chunck=None):
     with con.connect() as conn:
         query = sa.text(query)
 
-        return pd.read_sql_query(query, conn)
+        if chunck:
+            return [df for df in pd.read_sql_query(query, conn, chunksize=chunck)]
+        else:
+            return pd.read_sql_query(query, conn)
+        
+
+def read_sql_query(query, con):
+    with con.connect() as conn:
+        return conn.execute(sa.text(query))
 
 
 def load_with_csv(df, con, schema, tb_name, columns, test=False):

@@ -6,24 +6,28 @@ import DW_TOOLS as dwt
 @dwt.cronometrar
 def extract_d_sexo(con, schema, tb_name):
     query = f"""
-        SELECT DISTINCT
-            CASE
-                WHEN NULLIF(TRIM(sim.sexo), '')::INTEGER = 9 THEN 0
-                WHEN NULLIF(TRIM(sim.sexo), '')::INTEGER IN (0,1,2)
-                    THEN NULLIF(TRIM(sim.sexo), '')::INTEGER
-                ELSE NULL
-            END AS cd_sexo,
-            CASE NULLIF(TRIM(sim.sexo), '')::INTEGER
-                WHEN 0 THEN 'Ignorado'
-                WHEN 1 THEN 'Masculino'
-                WHEN 2 THEN 'Feminino'
-                WHEN 9 THEN 'Ignorado'
-                ELSE NULL
-            END AS ds_sexo,
-            NOW() AS dt_carga
-        FROM stg.stg_sim sim
-        LEFT JOIN {schema}.{tb_name} ds
-            ON (NULLIF(TRIM(sim.sexo), '')::INTEGER = ds.cd_sexo)
+        WITH sexo AS (
+            SELECT DISTINCT
+                CASE
+                    WHEN NULLIF(TRIM(sim.sexo), '')::INTEGER = 9 THEN 0
+                    WHEN NULLIF(TRIM(sim.sexo), '')::INTEGER IN (0,1,2)
+                        THEN NULLIF(TRIM(sim.sexo), '')::INTEGER
+                    ELSE NULL
+                END AS cd_sexo,
+                CASE NULLIF(TRIM(sim.sexo), '')::INTEGER
+                    WHEN 0 THEN 'Ignorado'
+                    WHEN 1 THEN 'Masculino'
+                    WHEN 2 THEN 'Feminino'
+                    WHEN 9 THEN 'Ignorado'
+                    ELSE NULL
+                END AS ds_sexo,
+                NOW() AS dt_carga
+            FROM stg.stg_sim sim
+        )
+        SELECT stg.*
+        FROM SEXO stg
+        LEFT JOIN {schema}.d_sexo ds
+            ON (stg.cd_sexo = ds.cd_sexo)
         WHERE ds.cd_sexo IS NULL
     """
 
