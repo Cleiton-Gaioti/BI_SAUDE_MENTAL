@@ -12,7 +12,6 @@ def extract_d_cid(con, schema, tb_name):
             NULLIF(TRIM(cat.descricao), '') AS ds_categoria,
             NULLIF(TRIM(cap.descricao), '') AS ds_capitulo,
             NULLIF(TRIM(sub.restrsexo), '') AS fl_restricao_sexo,
-            NULLIF(TRIM(sub.causaobito), '') AS fl_causa_obito,
             NOW() AS dt_carga
         FROM stg.stg_cid10_subcategorias sub
         INNER JOIN stg.stg_cid10_categorias cat
@@ -34,14 +33,21 @@ def treat_d_cid(df, max_sk):
         dt_default = dt.datetime(1900, 1, 1)
 
         df_aux = pd.DataFrame(data = [
-            [-1, -1, 'Não Informado', 'Não Informado', 'Não Informado', 'Não Informado', 'Não Informado', dt_default],
-            [-2, -2, 'Não Aplicável', 'Não Aplicável', 'Não Aplicável', 'Não Aplicável', 'Não Aplicável', dt_default],
-            [-3, -3, 'Desconhecido', 'Desconhecido', 'Desconhecido', 'Desconhecido', 'Desconhecido', dt_default]
+            [-1, -1, 'Não Informado', 'Não Informado', 'Não Informado', 'Não Informado', dt_default],
+            [-2, -2, 'Não Aplicável', 'Não Aplicável', 'Não Aplicável', 'Não Aplicável', dt_default],
+            [-3, -3, 'Desconhecido', 'Desconhecido', 'Desconhecido', 'Desconhecido', dt_default]
         ], columns=df.columns)
 
         df = pd.concat([df_aux, df])
 
-    return df
+    fillna = {  
+        "ds_subcategoria": 'Não Informado',
+        "ds_categoria": 'Não Informado',
+        "ds_capitulo": 'Não Informado',
+        "fl_restricao_sexo": 'N'
+    }
+
+    return df.fillna(fillna)
 
 
 def load_d_cid(df, con, schema, tb_name, chunck):

@@ -14,7 +14,7 @@ def extract_d_raca_cor(con, schema, tb_name):
                 WHEN 3 THEN 'Amarela'
                 WHEN 4 THEN 'Parda'
                 WHEN 5 THEN 'Indígena'
-                ELSE NULL
+                ELSE 'Não Informado'
             END AS ds_raca_cor,
             NOW() AS dt_carga
         FROM stg.stg_sim st

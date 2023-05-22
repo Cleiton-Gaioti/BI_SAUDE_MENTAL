@@ -95,3 +95,10 @@ def get_table_columns(con, schema, tb_name):
         result = conn.execute(query)
 
         return [r[0] for r in result.fetchall()]
+    
+
+def convert_date(str_date):
+    try:
+        return pd.to_datetime(str_date)
+    except:
+        return None

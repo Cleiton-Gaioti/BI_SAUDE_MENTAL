@@ -4,10 +4,8 @@ from ibge.localidades import Estados
 from pysus.online_data.SIM import download
 
 
-def extract_sim(ufs, start_year, end_year):
-    years = list(range(start_year, end_year))
-
-    return [pd.read_parquet(file) for file in download(ufs, years)]
+def extract_sim(uf, year):
+    return pd.read_parquet(download(uf, year))
 
 
 @dwt.cronometrar
@@ -38,7 +36,7 @@ def run_sim(ufs, start_year, con, schema, tb_name, end_year=0):
             ufs = Estados().getSigla()
         else:
             ufs = [ufs]
-
-    df_list= extract_sim(ufs, start_year, end_year)
     
-    [treat_sim(df, columns).pipe(load_sim, con, schema, tb_name, columns) for df in df_list]
+    years = list(range(start_year, end_year))
+
+    [[extract_sim(uf, year).pipe(treat_sim, columns).pipe(load_sim, con, schema, tb_name, columns)for year in years] for uf in ufs]

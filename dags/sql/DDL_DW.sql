@@ -51,7 +51,6 @@ CREATE TABLE IF NOT EXISTS dw.d_cid (
     ds_categoria        TEXT,
     ds_subcategoria     TEXT,
     fl_restricao_sexo   TEXT,
-    fl_causa_obito      TEXT,
     dt_carga            TIMESTAMP
 );
 
@@ -80,7 +79,8 @@ CREATE TABLE IF NOT EXISTS dw.f_obito (
     sk_cid_causa_obito                  INT REFERENCES dw.d_cid             (sk_cid),
     sk_escolaridade_falecido            INT REFERENCES dw.d_escolaridade    (sk_escolaridade),
     sk_sexo                             INT REFERENCES dw.d_sexo            (sk_sexo),
-    cd_registro                        INT,
+    cd_registro                         INT,
+    nu_cid                              TEXT,
     ds_assistencia_medica               TEXT,
     ds_atestante                        TEXT,
     ds_circunstancia_obito              TEXT,

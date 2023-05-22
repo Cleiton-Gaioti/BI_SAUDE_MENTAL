@@ -56,12 +56,14 @@ def treat_d_escolaridade(df, max_sk):
         df_aux = pd.DataFrame(data = [
             [-1, -1, 'Não Informado', -1, dt_default],
             [-2, -2, 'Não Aplicável', -2, dt_default],
-            [-3, -3, 'Desconhecido', -2, dt_default]
+            [-3, -3, 'Desconhecido', -3, dt_default]
         ], columns=df.columns)
 
         df = pd.concat([df_aux, df])
+    
+    fillna = {'ds_escolaridade': 'Não Informado', 'nu_serie': -3}
 
-    return df
+    return df.fillna(fillna)
 
 
 def load_d_escolaridade(df, con, schema, tb_name, chunck):

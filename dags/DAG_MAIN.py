@@ -16,8 +16,13 @@ with DAG(
     catchup=False,
     default_args={"retries": 2, "retry_delay": timedelta(minutes=1)}
 ) as dag:
+    
+    ufs = ['RJ']
+    start_year = 2010
+    end_year = 2020
+
     con = dwt.create_connection(
-        server='172.19.112.1', #'10.3.152.103', 
+        server='10.3.152.103', 
         database='saude_mental', 
         username='postgres', 
         password='postgres', 
@@ -43,9 +48,9 @@ with DAG(
             task_id='stg_sim',
             python_callable=run_sim,
             op_kwargs={
-                'ufs': ['ES'],
-                'start_year': 2010,
-                'end_year': 2020,
+                'ufs': ufs,
+                'start_year': start_year,
+                'end_year': end_year,
                 'con': con,
                 'schema': stg_schema,
                 'tb_name': 'stg_sim'},
@@ -197,7 +202,9 @@ with DAG(
         op_kwargs={
             'con': con,
             'schema': dw_schema,
-            'tb_name': 'f_obito'},
+            'tb_name': 'f_obito',
+            'start_year': start_year,
+            'end_year': end_year},
         dag=dag)
 
     struct_db >> stages >> dimensoes >> f_obito

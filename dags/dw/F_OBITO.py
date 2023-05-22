@@ -3,7 +3,7 @@ import datetime as dt
 import DW_TOOLS as dwt
 
 
-def extract_f_obito(con, schema, tb_name):
+def extract_f_obito(con, schema, tb_name, start_year, end_year):
     query = f"""
         WITH sim AS (
             SELECT
@@ -13,21 +13,27 @@ def extract_f_obito(con, schema, tb_name):
                 NULLIF(TRIM(sim.ocup), '')::INTEGER AS cd_ocupacao,
                 NULLIF(TRIM(sim."natural"), '')::INTEGER AS cd_naturalidade,
                 NULLIF(TRIM(sim.racacor), '')::INTEGER AS cd_raca_cor,
-                NULLIF(TRIM(sim.causabas), '') AS cd_cid,
+                COALESCE(NULLIF(TRIM(sim.causabas), ''), 'Não Informado') AS cd_cid,
                 NULLIF(TRIM(sim.esc), '')::INTEGER AS cd_escolaridade,
                 NULLIF(TRIM(sim.seriescfal), '')::INTEGER AS nu_serie,
                 NULLIF(TRIM(sim.sexo), '')::INTEGER AS cd_sexo,
-                NULLIF(TRIM(sim.contador), '')::INTEGER AS cd_registro,
-                REGEXP_REPLACE(NULLIF(TRIM(sim.crm), ''), '[^0-9]*', '', 'g') AS nu_crm_medico_atestante,
-                TO_DATE(NULLIF(TRIM(sim.dtcadastro), ''), 'DDMMYY') AS dt_cadastro,
-                TO_DATE(NULLIF(TRIM(sim.dtatestado), ''), 'DDMMYY') AS dt_atestado,
-                TO_DATE(NULLIF(TRIM(sim.dtobito), ''), 'DDMMYY') AS dt_obito,
-                TO_DATE(NULLIF(TRIM(sim.dtnasc), ''), 'DDMMYY') AS dt_nascimento_falecido,
+                COALESCE(NULLIF(TRIM(sim.contador), '')::INTEGER, -2) AS cd_registro,
+                COALESCE(REGEXP_REPLACE(NULLIF(TRIM(sim.crm), ''), '[^0-9]*', '', 'g'), 'Não Informado') AS nu_crm_medico_atestante,
+                COALESCE(TO_DATE(NULLIF(TRIM(sim.dtcadastro), ''), 'DDMMYY'), TO_DATE('01011900', 'DDMMYY')) AS dt_cadastro,
+                COALESCE(TO_DATE(NULLIF(TRIM(sim.dtatestado), ''), 'DDMMYY'), TO_DATE('01011900', 'DDMMYY')) AS dt_atestado,
+                CASE
+                    WHEN
+                        TO_DATE(NULLIF(TRIM(sim.dtobito), ''), 'DDMMYY') >= TO_DATE('0101{start_year}', 'DDMMYY')
+                            AND TO_DATE(NULLIF(TRIM(sim.dtobito), ''), 'DDMMYY') < TO_DATE('0101{end_year}', 'DDMMYY')
+                    THEN TO_DATE(NULLIF(TRIM(sim.dtobito), ''), 'DDMMYY')
+                    ELSE TO_DATE('01011900', 'DDMMYY')
+                END AS dt_obito,
+                COALESCE(TO_DATE(NULLIF(TRIM(sim.dtnasc), ''), 'DDMMYY'), TO_DATE('01011900', 'DDMMYY')) AS dt_nascimento_falecido,
                 CASE NULLIF(TRIM(sim.assistmed), '')
                     WHEN '1' THEN 'Com assistência'
                     WHEN '2' THEN 'Sem assistência'
                     WHEN '9' THEN 'Igorado'
-                    ELSE NULL
+                    ELSE 'Não Informado'
                 END AS ds_assistencia_medica,
                 CASE NULLIF(TRIM(sim.atestante), '')
                     WHEN '1' THEN 'Sim'
@@ -35,7 +41,7 @@ def extract_f_obito(con, schema, tb_name):
                     WHEN '3' THEN 'IML'
                     WHEN '4' THEN 'SVO'
                     WHEN '5' THEN 'Outros'
-                    ELSE NULL
+                    ELSE 'Não Informado'
                 END AS ds_atestante,
                 CASE NULLIF(TRIM(sim.circobito), '')
                     WHEN '1' THEN 'Acidente'
@@ -43,7 +49,7 @@ def extract_f_obito(con, schema, tb_name):
                     WHEN '3' THEN 'Homicídio'
                     WHEN '4' THEN 'Outros'
                     WHEN '9' THEN 'Ignorado'
-                    ELSE NULL
+                    ELSE 'Não Informado'
                 END AS ds_circunstancia_obito,
                 CASE
                     WHEN NULLIF(TRIM(sim.idade), '') = '000'
@@ -80,6 +86,7 @@ def extract_f_obito(con, schema, tb_name):
             , raca.sk_raca_cor
             , sexo.sk_sexo
             , stg.cd_registro
+            , stg.cd_cid AS nu_cid
             , stg.ds_assistencia_medica
             , stg.ds_atestante
             , stg.ds_circunstancia_obito
@@ -93,7 +100,7 @@ def extract_f_obito(con, schema, tb_name):
             , NOW() AS dt_carga
         FROM sim stg
         LEFT JOIN {schema}.{tb_name} fato
-            ON (stg.cd_registro = fato.cd_registro AND stg.dt_obito = fato.dt_obito AND stg.nu_crm_medico_atestante = fato.nu_crm_medico_atestante)
+            ON (stg.cd_registro = fato.cd_registro AND stg.dt_obito = fato.dt_obito AND stg.cd_cid = fato.nu_cid AND stg.nu_crm_medico_atestante = fato.nu_crm_medico_atestante)
         LEFT JOIN {schema}.d_cid cid
             ON (stg.cd_cid = cid.cd_cid)
         LEFT JOIN {schema}.d_escolaridade esc
@@ -130,11 +137,7 @@ def treat_f_obito(list_values, columns):
         'sk_escolaridade_falecido': 'Int64',
         'sk_sexo': 'Int64',
         'cd_registro': 'Int64',
-        'vl_idade_falecido': 'Int64',
-        'dt_cadastro': 'datetime64',
-        'dt_atestado': 'datetime64',
-        'dt_obito': 'datetime64',
-        'dt_nascimento_falecido': 'datetime64'
+        'vl_idade_falecido': 'Int64'
     }
 
     fillna = {
@@ -147,17 +150,6 @@ def treat_f_obito(list_values, columns):
         'sk_cid_causa_obito': -2,
         'sk_escolaridade_falecido': -2,
         'sk_sexo': -2,
-        'cd_registro': -2,
-        'ds_assistencia_medica': 'Não informado',
-        'ds_atestante': 'Não informado',
-        'ds_circunstancia_obito': 'Não informado',
-        'nu_crm_medico_atestante': 'Não informado',
-        'dt_cadastro': pd.to_datetime('01/01/1900'),
-        'dt_atestado': pd.to_datetime('01/01/1900'),
-        'dt_obito': pd.to_datetime('01/01/1900'),
-        'dt_nascimento_falecido': pd.to_datetime('01/01/1900'),
-        'vl_idade_falecido': -2,
-        'ds_unidade_idade_falecido': 'Não informado'
     }
 
     return pd.DataFrame(data=list_values)[columns].astype(dtypes).fillna(fillna)
@@ -167,10 +159,12 @@ def load_f_obito(df, con, schema, tb_name, columns):
     dwt.load_with_csv(df, con, schema, tb_name, columns)
 
 
-def run_f_obito(con, schema, tb_name, chunck=10000):
+def run_f_obito(con, schema, tb_name, start_year, end_year=0, chunck=10000):
     columns = dwt.get_table_columns(con, schema, tb_name)
 
-    result = extract_f_obito(con, schema, tb_name)
+    end_year = max(start_year, end_year) + 1
+
+    result = extract_f_obito(con, schema, tb_name, start_year, end_year)
 
     while True:
         list_values = result.fetchmany(chunck)
