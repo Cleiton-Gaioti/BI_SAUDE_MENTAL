@@ -12,12 +12,12 @@ with DAG(
     'DAG_MAIN',
     start_date=datetime(2023, 2, 25),
     schedule_interval='@daily',
-    concurrency=3,
+    concurrency=1,
     catchup=False,
     default_args={"retries": 2, "retry_delay": timedelta(minutes=1)}
 ) as dag:
     
-    ufs = ['RJ']
+    ufs = ['ES']
     start_year = 2010
     end_year = 2020
 
@@ -27,7 +27,8 @@ with DAG(
         username='postgres', 
         password='postgres', 
         port=5432)
-    
+
+
     with TaskGroup(group_id='create_struct_db') as struct_db:
         stg_schema = "stg"
 
@@ -43,19 +44,8 @@ with DAG(
             op_kwargs={"con": con, "file": "dags/sql/DDL_DW.sql"},
             dag=dag)
 
+
     with TaskGroup(group_id='stages') as stages:
-        stg_sim = PythonOperator(
-            task_id='stg_sim',
-            python_callable=run_sim,
-            op_kwargs={
-                'ufs': ufs,
-                'start_year': start_year,
-                'end_year': end_year,
-                'con': con,
-                'schema': stg_schema,
-                'tb_name': 'stg_sim'},
-            dag=dag)
-        
         stg_municipios = PythonOperator(
             task_id='stg_municipios',
             python_callable=run_stg_municipios,
@@ -128,6 +118,48 @@ with DAG(
                 'schema': stg_schema,
                 'tb_name': 'stg_cbo'},
             dag=dag)
+        
+        stg_tb_sigtab = PythonOperator(
+            task_id='stg_tb_sigtab',
+            python_callable=run_stg_tb_sigtab,
+            op_kwargs={
+                'con': con,
+                'schema': stg_schema,
+                'tb_name': 'stg_tb_sigtab'},
+            dag=dag)
+        
+        stg_leitos = PythonOperator(
+            task_id='stg_leitos',
+            python_callable=run_stg_leitos,
+            op_kwargs={
+                'con': con,
+                'schema': stg_schema,
+                'tb_name': 'stg_leitos'},
+            dag=dag)
+
+        stg_sim = PythonOperator(
+            task_id='stg_sim',
+            python_callable=run_sim,
+            op_kwargs={
+                'ufs': ufs,
+                'start_year': start_year,
+                'end_year': end_year,
+                'con': con,
+                'schema': stg_schema,
+                'tb_name': 'stg_sim'},
+            dag=dag)
+
+        stg_sih = PythonOperator(
+            task_id='stg_sih',
+            python_callable=run_sih,
+            op_kwargs={
+                'ufs': ufs,
+                'start_year': start_year,
+                'end_year': end_year,
+                'con': con,
+                'schema': stg_schema,
+                'tb_name': 'stg_sih'},
+            dag=dag)
 
 
     with TaskGroup(group_id='dimensoes') as dimensoes:
@@ -196,15 +228,17 @@ with DAG(
                 'tb_name': 'd_sexo'},
             dag=dag)
 
-    f_obito = PythonOperator(
-        task_id='f_obito',
-        python_callable=run_f_obito,
-        op_kwargs={
-            'con': con,
-            'schema': dw_schema,
-            'tb_name': 'f_obito',
-            'start_year': start_year,
-            'end_year': end_year},
-        dag=dag)
 
-    struct_db >> stages >> dimensoes >> f_obito
+    with TaskGroup(group_id='fatos') as fatos:
+        f_obito = PythonOperator(
+            task_id='f_obito',
+            python_callable=run_f_obito,
+            op_kwargs={
+                'con': con,
+                'schema': dw_schema,
+                'tb_name': 'f_obito',
+                'start_year': start_year,
+                'end_year': end_year},
+            dag=dag)
+
+    struct_db >> stages >> dimensoes >> fatos

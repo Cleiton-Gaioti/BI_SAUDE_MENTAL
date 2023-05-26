@@ -16,9 +16,9 @@ def treat_sim(df, columns):
         if col not in df.columns:
             df.insert(0, col, None)
 
-    df = df[columns]
+    df = df.astype('object').apply(lambda x: x.str.strip()).replace('', None)
 
-    return df
+    return df[columns]
 
 
 def load_sim(df, con, schema, tb_name, columns):
@@ -36,7 +36,7 @@ def run_sim(ufs, start_year, con, schema, tb_name, end_year=0):
             ufs = Estados().getSigla()
         else:
             ufs = [ufs]
-    
+
     years = list(range(start_year, end_year))
 
-    [[extract_sim(uf, year).pipe(treat_sim, columns).pipe(load_sim, con, schema, tb_name, columns)for year in years] for uf in ufs]
+    [[extract_sim(uf, year).pipe(treat_sim, columns).pipe(load_sim, con, schema, tb_name, columns) for year in years] for uf in ufs]
