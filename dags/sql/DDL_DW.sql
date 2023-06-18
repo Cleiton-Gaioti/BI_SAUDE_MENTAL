@@ -69,6 +69,22 @@ CREATE TABLE IF NOT EXISTS dw.d_sexo (
     dt_carga    TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS dw.d_estabelecimento (
+    sk_estabelecimento      INT PRIMARY KEY,
+    nu_cnpj_estabelecimento TEXT,
+    ds_regime               TEXT,
+    ds_natureza_juridica    TEXT,
+    ds_gestao               TEXT,
+    dt_carga                TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS dw.d_procedimento (
+    sk_procedimento INT PRIMARY KEY,
+    cd_procedimento INT,
+    ds_procedimento TEXT,
+    dt_carga        TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS dw.f_obito (
     sk_municipio_naturalidade_falecido  INT REFERENCES dw.d_municipio       (sk_municipio),
     sk_municipio_ocorrencia_obito       INT REFERENCES dw.d_municipio       (sk_municipio),

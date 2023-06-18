@@ -5,7 +5,12 @@ from pysus.online_data.SIM import download
 
 
 def extract_sim(uf, year):
-    return pd.read_parquet(download(uf, year))
+    path = download(uf, year)
+    
+    if path:
+        return pd.read_parquet(path)
+    else:
+        return None
 
 
 @dwt.cronometrar
@@ -39,4 +44,9 @@ def run_sim(ufs, start_year, con, schema, tb_name, end_year=0):
 
     years = list(range(start_year, end_year))
 
-    [[extract_sim(uf, year).pipe(treat_sim, columns).pipe(load_sim, con, schema, tb_name, columns) for year in years] for uf in ufs]
+    for uf in ufs:
+        for year in years:
+            tbl_extract = extract_sim(uf, year)
+
+            if isinstance(tbl_extract, pd.DataFrame):
+                treat_sim(tbl_extract, columns).pipe(load_sim, con, schema, tb_name, columns)

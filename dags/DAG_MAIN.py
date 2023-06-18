@@ -19,7 +19,7 @@ with DAG(
     
     ufs = ['ES']
     start_year = 2010
-    end_year = 2020
+    end_year = 2023
 
     con = dwt.create_connection(
         server='10.3.152.103', 
@@ -228,6 +228,24 @@ with DAG(
                 'tb_name': 'd_sexo'},
             dag=dag)
 
+        d_estabelecimento = PythonOperator(
+            task_id='d_estabelecimento',
+            python_callable=run_d_estabelecimento,
+            op_kwargs={
+                'con': con,
+                'schema': dw_schema,
+                'tb_name': 'd_estabelecimento'},
+            dag=dag)
+
+        d_procedimento = PythonOperator(
+            task_id='run_d_procedimento',
+            python_callable=run_d_procedimento,
+            op_kwargs={
+                'con': con,
+                'schema': dw_schema,
+                'tb_name': 'd_procedimento'},
+            dag=dag)
+
 
     with TaskGroup(group_id='fatos') as fatos:
         f_obito = PythonOperator(
@@ -240,5 +258,6 @@ with DAG(
                 'start_year': start_year,
                 'end_year': end_year},
             dag=dag)
+
 
     struct_db >> stages >> dimensoes >> fatos

@@ -9,17 +9,13 @@ def extract_d_sexo(con, schema, tb_name):
         WITH sexo AS (
             SELECT DISTINCT
                 CASE
-                    WHEN NULLIF(TRIM(sim.sexo), '')::INTEGER = 9 THEN 0
-                    WHEN NULLIF(TRIM(sim.sexo), '')::INTEGER IN (0,1,2)
-                        THEN NULLIF(TRIM(sim.sexo), '')::INTEGER
-                    ELSE NULL
+                    WHEN NULLIF(TRIM(sim.sexo), '')::INTEGER NOT IN (1,2) THEN -1
+                    ELSE NULLIF(TRIM(sim.sexo), '')::INTEGER
                 END AS cd_sexo,
                 CASE NULLIF(TRIM(sim.sexo), '')::INTEGER
-                    WHEN 0 THEN 'Ignorado'
-                    WHEN 1 THEN 'Masculino'
-                    WHEN 2 THEN 'Feminino'
-                    WHEN 9 THEN 'Ignorado'
-                    ELSE NULL
+                    WHEN -1 THEN 'Não Informado'
+                    WHEN 1  THEN 'Masculino'
+                    WHEN 2  THEN 'Feminino'
                 END AS ds_sexo,
                 NOW() AS dt_carga
             FROM stg.stg_sim sim
@@ -48,7 +44,7 @@ def treat_d_sexo(df, max_sk):
             [-3, -3, 'Desconhecido', dt_default]
         ], columns=df.columns)
 
-        df = pd.concat([df_aux, df])
+        df = pd.concat([df_aux, df]).drop_duplicates(["cd_sexo", "ds_sexo"])
 
     return df
 

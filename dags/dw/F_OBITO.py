@@ -149,7 +149,7 @@ def treat_f_obito(list_values, columns):
         'sk_raca_cor': -2,
         'sk_cid_causa_obito': -2,
         'sk_escolaridade_falecido': -2,
-        'sk_sexo': -2,
+        'sk_sexo': -1,
     }
 
     return pd.DataFrame(data=list_values)[columns].astype(dtypes).fillna(fillna)
