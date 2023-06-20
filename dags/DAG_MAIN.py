@@ -210,15 +210,6 @@ with DAG(
                 'tb_name': 'd_cid'},
             dag=dag)
 
-        d_escolaridade = PythonOperator(
-            task_id='d_escolaridade',
-            python_callable=run_d_escolaridade,
-            op_kwargs={
-                'con': con,
-                'schema': dw_schema,
-                'tb_name': 'd_escolaridade'},
-            dag=dag)
-
         d_sexo = PythonOperator(
             task_id='d_sexo',
             python_callable=run_d_sexo,
@@ -238,12 +229,21 @@ with DAG(
             dag=dag)
 
         d_procedimento = PythonOperator(
-            task_id='run_d_procedimento',
+            task_id='d_procedimento',
             python_callable=run_d_procedimento,
             op_kwargs={
                 'con': con,
                 'schema': dw_schema,
                 'tb_name': 'd_procedimento'},
+            dag=dag)
+
+        d_especialidade = PythonOperator(
+            task_id='d_especialidade',
+            python_callable=run_d_especialidade,
+            op_kwargs={
+                'con': con,
+                'schema': dw_schema,
+                'tb_name': 'd_especialidade'},
             dag=dag)
 
 
@@ -257,6 +257,15 @@ with DAG(
                 'tb_name': 'f_obito',
                 'start_year': start_year,
                 'end_year': end_year},
+            dag=dag)
+        
+        f_hospitalizacao = PythonOperator(
+            task_id='f_hospitalizacao',
+            python_callable=run_f_hospitalizacao,
+            op_kwargs={
+                'con': con,
+                'schema': dw_schema,
+                'tb_name': 'f_hospitalizacao'},
             dag=dag)
 
 

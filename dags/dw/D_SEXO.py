@@ -8,17 +8,15 @@ def extract_d_sexo(con, schema, tb_name):
     query = f"""
         WITH sexo AS (
             SELECT DISTINCT
-                CASE
-                    WHEN NULLIF(TRIM(sim.sexo), '')::INTEGER NOT IN (1,2) THEN -1
-                    ELSE NULLIF(TRIM(sim.sexo), '')::INTEGER
-                END AS cd_sexo,
+                NULLIF(TRIM(sim.sexo), '')::INTEGER AS cd_sexo,
                 CASE NULLIF(TRIM(sim.sexo), '')::INTEGER
-                    WHEN -1 THEN 'Não Informado'
-                    WHEN 1  THEN 'Masculino'
-                    WHEN 2  THEN 'Feminino'
+                    WHEN 1 THEN 'Masculino'
+                    WHEN 2 THEN 'Feminino'
+                    ELSE NULL
                 END AS ds_sexo,
                 NOW() AS dt_carga
             FROM stg.stg_sim sim
+            WHERE NULLIF(TRIM(sim.sexo), '')::INTEGER IN (1, 2)
         )
         SELECT stg.*
         FROM SEXO stg

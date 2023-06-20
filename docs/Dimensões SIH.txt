@@ -1,0 +1,17 @@
+Dimensão de estabelecimento
+    * CGC_HOSP: CNPJ do estabelecimento
+    * NATUREZA: Natureza jurídica do hospital
+    * def_regime: Definição da natureza (regime)
+    * NAT_JUR: Natureza jurídica do estabelecimento, conforme a Comissão Nacional de Classificação (CONCLA)
+    * def_nat_jur: Definição da natureza jurídica
+    * GESTAO: Indica o tipo de gestão do hospital
+    * def_gestao: Definição do tipo de gestão do hospital
+
+Dimensão de leitos
+    * ESPEC
+    * LEITOS.csv
+
+Dimensão de procedimentos
+    * PROC_REA
+    * B_SIGTAB.csv
+do

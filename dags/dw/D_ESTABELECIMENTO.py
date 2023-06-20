@@ -8,7 +8,7 @@ def extract_d_estabelecimento(con, schema, tb_name):
     query = f"""
         WITH stage AS (
             SELECT DISTINCT
-                NULLIF(UPPER(TRIM(cgc_hosp)), '') AS nu_cnpj_estabelecimento
+                NULLIF(TRIM(cgc_hosp), '') AS nu_cnpj_estabelecimento
                 , CASE
                     WHEN NULLIF(UPPER(TRIM(natureza)), '')::INTEGER IN (10,30,31,40,41,50)
                         THEN 'PÚBLICO'

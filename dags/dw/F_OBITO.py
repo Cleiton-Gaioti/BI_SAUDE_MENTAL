@@ -14,8 +14,6 @@ def extract_f_obito(con, schema, tb_name, start_year, end_year):
                 NULLIF(TRIM(sim."natural"), '')::INTEGER AS cd_naturalidade,
                 NULLIF(TRIM(sim.racacor), '')::INTEGER AS cd_raca_cor,
                 COALESCE(NULLIF(TRIM(sim.causabas), ''), 'Não Informado') AS cd_cid,
-                NULLIF(TRIM(sim.esc), '')::INTEGER AS cd_escolaridade,
-                NULLIF(TRIM(sim.seriescfal), '')::INTEGER AS nu_serie,
                 NULLIF(TRIM(sim.sexo), '')::INTEGER AS cd_sexo,
                 COALESCE(NULLIF(TRIM(sim.contador), '')::INTEGER, -2) AS cd_registro,
                 COALESCE(REGEXP_REPLACE(NULLIF(TRIM(sim.crm), ''), '[^0-9]*', '', 'g'), 'Não Informado') AS nu_crm_medico_atestante,
@@ -33,7 +31,7 @@ def extract_f_obito(con, schema, tb_name, start_year, end_year):
                     WHEN '1' THEN 'Com assistência'
                     WHEN '2' THEN 'Sem assistência'
                     WHEN '9' THEN 'Igorado'
-                    ELSE 'Não Informado'
+                    ELSE NULL
                 END AS ds_assistencia_medica,
                 CASE NULLIF(TRIM(sim.atestante), '')
                     WHEN '1' THEN 'Sim'
@@ -41,7 +39,7 @@ def extract_f_obito(con, schema, tb_name, start_year, end_year):
                     WHEN '3' THEN 'IML'
                     WHEN '4' THEN 'SVO'
                     WHEN '5' THEN 'Outros'
-                    ELSE 'Não Informado'
+                    ELSE NULL
                 END AS ds_atestante,
                 CASE NULLIF(TRIM(sim.circobito), '')
                     WHEN '1' THEN 'Acidente'
@@ -49,35 +47,21 @@ def extract_f_obito(con, schema, tb_name, start_year, end_year):
                     WHEN '3' THEN 'Homicídio'
                     WHEN '4' THEN 'Outros'
                     WHEN '9' THEN 'Ignorado'
-                    ELSE 'Não Informado'
+                    ELSE NULL
                 END AS ds_circunstancia_obito,
                 CASE
-                    WHEN NULLIF(TRIM(sim.idade), '') = '000'
-                        THEN -2
-                    WHEN LEFT(NULLIF(TRIM(sim.idade), ''),1) IN ('0','1','2','3','4')
+                    WHEN LEFT(NULLIF(TRIM(sim.idade), ''),1) IN ('1','2','3')
+                        THEN 0
+                    WHEN LEFT(NULLIF(TRIM(sim.idade), ''),1) = '4'
                         THEN RIGHT(NULLIF(TRIM(sim.idade), ''),2)::INTEGER
                     WHEN LEFT(NULLIF(TRIM(sim.idade), ''),1) = '5'
                         THEN (100 + RIGHT(NULLIF(TRIM(sim.idade), ''),2)::INTEGER)
-                    ELSE -2
-                END AS vl_idade_falecido,
-                CASE
-                    WHEN NULLIF(TRIM(sim.idade), '') = '000' THEN 'Não Informado'
-                    ELSE
-                        CASE LEFT(NULLIF(TRIM(sim.idade), ''),1)
-                            WHEN '0' THEN 'MINUTOS'
-                            WHEN '1' THEN 'HORAS'
-                            WHEN '2' THEN 'DIAS'
-                            WHEN '3' THEN 'MESES'
-                            WHEN '4' THEN 'ANOS'
-                            WHEN '5' THEN 'ANOS'
-                            ELSE 'Não Informado'
-                        END
-                END AS ds_unidade_idade_falecido
+                    ELSE NULL
+                END AS vl_idade_falecido
             FROM stg.stg_sim sim
         )
         SELECT DISTINCT
               cid.sk_cid AS sk_cid_causa_obito
-            , esc.sk_escolaridade AS sk_escolaridade_falecido
             , mun_ocor.sk_municipio AS sk_municipio_ocorrencia_obito
             , mun_nat.sk_municipio AS sk_municipio_naturalidade_falecido
             , mun_res.sk_municipio AS sk_municipio_residencia_falecido
@@ -96,15 +80,12 @@ def extract_f_obito(con, schema, tb_name, start_year, end_year):
             , stg.dt_obito
             , stg.dt_nascimento_falecido
             , stg.vl_idade_falecido
-            , stg.ds_unidade_idade_falecido
             , NOW() AS dt_carga
         FROM sim stg
         LEFT JOIN {schema}.{tb_name} fato
             ON (stg.cd_registro = fato.cd_registro AND stg.dt_obito = fato.dt_obito AND stg.cd_cid = fato.nu_cid AND stg.nu_crm_medico_atestante = fato.nu_crm_medico_atestante)
         LEFT JOIN {schema}.d_cid cid
             ON (stg.cd_cid = cid.cd_cid)
-        LEFT JOIN {schema}.d_escolaridade esc
-            ON (stg.cd_escolaridade = esc.cd_escolaridade AND stg.nu_serie = esc.nu_serie)
         LEFT JOIN {schema}.d_municipio mun_ocor
             ON (stg.cd_municipio_ocorrencia = mun_ocor.cd_municipio_normalizado)
         LEFT JOIN {schema}.d_municipio mun_nat
@@ -134,7 +115,6 @@ def treat_f_obito(list_values, columns):
         'sk_naturalidade': 'Int64',
         'sk_raca_cor': 'Int64',
         'sk_cid_causa_obito': 'Int64',
-        'sk_escolaridade_falecido': 'Int64',
         'sk_sexo': 'Int64',
         'cd_registro': 'Int64',
         'vl_idade_falecido': 'Int64'
@@ -148,8 +128,11 @@ def treat_f_obito(list_values, columns):
         'sk_naturalidade': -2,
         'sk_raca_cor': -2,
         'sk_cid_causa_obito': -2,
-        'sk_escolaridade_falecido': -2,
         'sk_sexo': -1,
+        'ds_assistencia_medica': 'Não Informado',
+        'ds_atestante': 'Não Informado',
+        'ds_circunstancia_obito': 'Não Informado',
+        'vl_idade_falecido': -2
     }
 
     return pd.DataFrame(data=list_values)[columns].astype(dtypes).fillna(fillna)

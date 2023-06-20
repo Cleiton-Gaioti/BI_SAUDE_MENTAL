@@ -54,14 +54,6 @@ CREATE TABLE IF NOT EXISTS dw.d_cid (
     dt_carga            TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS dw.d_escolaridade (
-    sk_escolaridade INT PRIMARY KEY,
-    cd_escolaridade INT,
-    ds_escolaridade TEXT,
-    nu_serie        INT,
-    dt_carga        TIMESTAMP
-);
-
 CREATE TABLE IF NOT EXISTS dw.d_sexo (
     sk_sexo     INT PRIMARY KEY,
     cd_sexo     INT,
@@ -76,6 +68,13 @@ CREATE TABLE IF NOT EXISTS dw.d_estabelecimento (
     ds_natureza_juridica    TEXT,
     ds_gestao               TEXT,
     dt_carga                TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS dw.d_especialidade (
+    sk_especialidade    INT PRIMARY KEY,
+    cd_especialidade    INT,
+    ds_especialidade    TEXT,
+    dt_carga            TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS dw.d_procedimento (
@@ -93,7 +92,6 @@ CREATE TABLE IF NOT EXISTS dw.f_obito (
     sk_naturalidade                     INT REFERENCES dw.d_naturalidade    (sk_naturalidade),
     sk_raca_cor                         INT REFERENCES dw.d_raca_cor        (sk_raca_cor),
     sk_cid_causa_obito                  INT REFERENCES dw.d_cid             (sk_cid),
-    sk_escolaridade_falecido            INT REFERENCES dw.d_escolaridade    (sk_escolaridade),
     sk_sexo                             INT REFERENCES dw.d_sexo            (sk_sexo),
     cd_registro                         INT,
     nu_cid                              TEXT,
@@ -106,6 +104,30 @@ CREATE TABLE IF NOT EXISTS dw.f_obito (
     dt_obito                            DATE,
     dt_nascimento_falecido              DATE,
     vl_idade_falecido                   INT,
-    ds_unidade_idade_falecido           TEXT,
+    dt_carga                            TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS dw.f_hospitalizacao (
+    sk_municipio_estabelecimento        INT REFERENCES dw.d_municipio       (sk_municipio),
+    sk_municipio_residencia_paciente    INT REFERENCES dw.d_municipio       (sk_municipio),
+    sk_estabelecimento                  INT REFERENCES dw.d_estabelecimento (sk_estabelecimento),
+    sk_cid_diagnostico_primario         INT REFERENCES dw.d_cid             (sk_cid),
+    sk_cid_diagnostico_secundario       INT REFERENCES dw.d_cid             (sk_cid),
+    sk_sexo                             INT REFERENCES dw.d_sexo            (sk_sexo),
+    sk_raca_cor                         INT REFERENCES dw.d_raca_cor        (sk_raca_cor),
+    sk_ocupacao                         INT REFERENCES dw.d_ocupacao        (sk_ocupacao),
+    sk_procedimento_solicitado          INT REFERENCES dw.d_procedimento    (sk_procedimento),
+    sk_procedimento_realizado           INT REFERENCES dw.d_procedimento    (sk_procedimento),
+    sk_especialidade_leito              INT REFERENCES dw.d_especialidade   (sk_especialidade),
+    nu_competencia                      TEXT,
+    nu_aih                              TEXT,
+    ds_tipo_aih                         TEXT,
+    dt_nascimento_paciente              TIMESTAMP,
+    qtd_diarias_internacao              INT,
+    vl_total_internacao                 FLOAT,
+    dt_internacao                       TIMESTAMP,
+    dt_saida                            TIMESTAMP,
+    fl_obito                            TEXT,
+    vl_idade_paciente                   INT,
     dt_carga                            TIMESTAMP
 );

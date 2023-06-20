@@ -6,15 +6,24 @@ import DW_TOOLS as dwt
 @dwt.cronometrar
 def extract_d_procedimento(con, schema, tb_name):
     query = f"""
+        WITH procedimentos AS (
+            SELECT 
+                TRIM(proc_rea)::INTEGER AS cd_procedimento
+            FROM stg.stg_sih
+            UNION
+            SELECT 
+                TRIM(proc_solic)::INTEGER AS cd_procedimento
+            FROM stg.stg_sih ss
+        )
         SELECT DISTINCT
-            proc_rea::INTEGER AS cd_procedimento
+            proc.cd_procedimento
             , UPPER(TRIM(value)) AS ds_procedimento
             , NOW() AS dt_carga
-        FROM stg.stg_sih ss
+        FROM procedimentos proc
         INNER JOIN stg.stg_tb_sigtab st
-            ON (ss.proc_rea::INTEGER = st.cod)
+            ON (proc.cd_procedimento = st.cod)
         LEFT JOIN {schema}.{tb_name} dim
-            ON (ss.proc_rea::INTEGER = dim.cd_procedimento)
+            ON (proc.cd_procedimento = dim.cd_procedimento)
         WHERE dim.cd_procedimento IS NULL
     """
 
