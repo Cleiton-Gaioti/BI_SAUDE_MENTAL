@@ -19,7 +19,7 @@ with DAG(
     
     ufs = ['ES']
     start_year = 2010
-    end_year = 2023
+    end_year = 2021
 
     con = dwt.create_connection(
         server='10.3.152.103', 

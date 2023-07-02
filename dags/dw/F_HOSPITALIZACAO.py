@@ -12,7 +12,11 @@ def extract_f_hospitalizacao(con, schema, tb_name):
                 , NULLIF(TRIM(sih.cgc_hosp), '') AS nu_cnpj_estabelecimento
                 , NULLIF(UPPER(TRIM(sih.diag_princ)), '') AS cd_cid_diagnostico_primario
                 , NULLIF(UPPER(TRIM(sih.diag_secun)), '') AS cd_cid_diagnostico_secundario
-                , NULLIF(TRIM(sih.sexo), '')::INTEGER AS cd_sexo
+                , CASE
+                    WHEN NULLIF(TRIM(sih.sexo), '')::INTEGER = 1 THEN 1
+                    WHEN NULLIF(TRIM(sih.sexo), '')::INTEGER IN (2,3) THEN 2
+                    ELSE NULL
+                END AS cd_sexo
                 , NULLIF(TRIM(sih.raca_cor), '')::INTEGER AS cd_raca_cor
                 , NULLIF(TRIM(sih.cbor), '')::INTEGER AS cd_ocupacao
                 , TRIM(sih.proc_solic)::INTEGER AS cd_procedimento_solicitado
