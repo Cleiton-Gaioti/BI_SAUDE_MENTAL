@@ -17,7 +17,14 @@ def extract_f_hospitalizacao(con, schema, tb_name):
                     WHEN NULLIF(TRIM(sih.sexo), '')::INTEGER IN (2,3) THEN 2
                     ELSE NULL
                 END AS cd_sexo
-                , NULLIF(TRIM(sih.raca_cor), '')::INTEGER AS cd_raca_cor
+                , CASE NULLIF(TRIM(sih.raca_cor), '')::INTEGER
+                    WHEN 1 THEN 1
+                    WHEN 2 THEN 2
+                    WHEN 3 THEN 4
+                    WHEN 4 THEN 3
+                    WHEN 5 THEN 3
+                    ELSE NULL
+                END AS cd_raca_cor
                 , NULLIF(TRIM(sih.cbor), '')::INTEGER AS cd_ocupacao
                 , TRIM(sih.proc_solic)::INTEGER AS cd_procedimento_solicitado
                 , TRIM(sih.proc_rea)::INTEGER AS cd_procedimento_realizado
