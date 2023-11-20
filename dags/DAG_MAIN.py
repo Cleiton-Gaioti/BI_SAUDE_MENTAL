@@ -17,9 +17,9 @@ with DAG(
     default_args={"retries": 2, "retry_delay": timedelta(minutes=1)}
 ) as dag:
     
-    ufs = ['ES']
+    ufs = 'BR'
     start_year = 2010
-    end_year = 2021
+    end_year = 2023
 
     con = dwt.create_connection(
         server='10.3.152.103', 
