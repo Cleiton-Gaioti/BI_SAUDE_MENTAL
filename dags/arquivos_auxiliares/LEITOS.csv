@@ -1,0 +1,39 @@
+value;cod
+Cirúrgico;01
+Obstétricos;02
+Clínico;03
+Crônicos;04
+Psiquiatria;05
+Pneumologia Sanitária (Tisiologia);06
+Pediátricos;07
+Reabilitação;08
+Leito Dia / Cirúrgicos;09
+Leito Dia / Aids;10
+Leito Dia / Fibrose Cística;11
+Leito Dia / Intercorrência Pós-Transplante;12
+Leito Dia / Geriatria;13
+Leito Dia / Saúde Mental;14
+Unidade Intermediária;64
+Unidade Intermediária Neonatal;65
+UTI I;74
+UTI Adulto II;75
+UTI Adulto III;76
+UTI Infantil I;77
+UTI Infantil II;78
+UTI Infantil III;79
+UTI Neonatal I;80
+UTI Neonatal II;81
+UTI Neonatal III;82
+UTI Queimados;83
+Acolhimento Noturno;84
+UTI Coronariana-UCO tipo II;85
+UTI Coronariana-UCO tipo III;86
+Saúde Mental (Clínico);87
+Queimado Adulto (Clínico);88
+Queimado Pediátrico (Clínico);89
+Queimado Adulto (Cirúrgico);90
+Queimado Pediátrico (Cirúrgico);91
+UCI Unidade de Cuidados Intermediarios Neonatal Convencional;92
+UCI Unidade de Cuidados Intermediarios Neonatal Canguru;93
+UCI Unidade de Cuidados Intermediarios Pediatrico;94
+UCI Unidade de Cuidados Intermediarios Adulto;95
