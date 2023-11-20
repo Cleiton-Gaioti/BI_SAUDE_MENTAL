@@ -35,7 +35,7 @@ def run_sih(ufs, start_year, con, schema, tb_name, end_year=0):
     years = list(range(start_year, max(start_year, end_year) + 1))
 
     if isinstance(ufs, str):
-        if ufs.lower() == 'all':
+        if ufs.lower() == 'br':
             ufs = Estados().getSigla()
         else:
             ufs = [ufs]

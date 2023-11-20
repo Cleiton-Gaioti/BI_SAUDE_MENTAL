@@ -37,7 +37,7 @@ def run_sim(ufs, start_year, con, schema, tb_name, end_year=0):
     end_year = max(start_year, end_year) + 1
 
     if isinstance(ufs, str):
-        if ufs.lower() == 'all':
+        if ufs.lower() == 'br':
             ufs = Estados().getSigla()
         else:
             ufs = [ufs]
